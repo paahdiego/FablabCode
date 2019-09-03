@@ -105,13 +105,14 @@ class Impressao{
 };
 class CorteALaser{
     protected:
-        char objectName[100], cliente[100];
+        char objectName[100], cliente[100], material[50];
         float cost_time, area_de_corte, perimetro;
         int  minutes, os, tipo_os;
         char aux[10];
     public:
         CorteALaser(){ tipo_os = 2;}
         void set_objectName(char name[]){ strcpy(objectName, name); }
+        void set_material(char name[]){ strcpy(material, name); }
         void set_cliente(char name[]){ strcpy(cliente, name); }
         void set_cost_time(float cost){ cost_time = cost; }
         void set_area(float area){ area_de_corte = area; }
@@ -121,6 +122,7 @@ class CorteALaser{
         
         int get_os(){ return os; }
         int get_tipo_os(){ return tipo_os; }
+        char * get_material(){ return material; }
         char * get_cliente(){ return cliente; }
         char * get_objectName(){ return objectName; }
         float get_area(){ return area_de_corte; }
@@ -137,12 +139,47 @@ class CorteALaser{
             cout << "Nome do cliente: " << cliente << endl;
             cout << "Nome do corte: " << objectName << endl;
             cout << "Tempo de corte: " << minutes<< " minutos" << endl;
-            cout << endl;
-            
-        }
-            
+            cout << endl;   
+        }   
 };
 class CorteCNC{
+    protected:
+        char objectName[100], cliente[100], material[50];
+        float cost_time, area_de_corte, perimetro;
+        int  minutes, os, tipo_os;
+        char aux[10];
+    public:
+        CorteCNC(){ tipo_os = 3;}
+        void set_objectName(char name[]){ strcpy(objectName, name); }
+        void set_cliente(char name[]){ strcpy(cliente, name); }
+        void set_material(char name[]){ strcpy(material, name); }
+        void set_cost_time(float cost){ cost_time = cost; }
+        void set_area(float area){ area_de_corte = area; }
+        void set_perimetro(float Perimetro){ perimetro = Perimetro; }
+        void set_minutes(int min){ minutes = min; }
+        void set_os(int Os){ os = Os; }
+        
+        int get_os(){ return os; }
+        int get_tipo_os(){ return tipo_os; }
+        char * get_cliente(){ return cliente; }
+        char * get_objectName(){ return objectName; }
+        char * get_material(){ return material; }
+        float get_area(){ return area_de_corte; }
+        float get_perimetro(){ return perimetro; }
+        int get_minutes(){ return minutes; }
+        float get_cost_time(){             
+            cost_time = 1.2 * minutes;           
+            cost_time = RoundCost(cost_time);
+            return cost_time;
+        }
+        void viewCNC(){
+            cout << "Ordem de servico: " << os << endl;
+            cout << "Tipo de servico: " << tipo_os << endl;
+            cout << "Nome do cliente: " << cliente << endl;
+            cout << "Nome do corte: " << objectName << endl;
+            cout << "Tempo de corte: " << minutes<< " minutos" << endl;
+            cout << endl;   
+        }
 };
 
 vector <Impressao> lista_impressao;
@@ -166,15 +203,45 @@ int main(){
                 case 2:
                     break;
                 case 3:
-                    TextoDoMenu(3);
-                    if(ordem_de_servico >= 0){ 
+                    //mostrar somente por tipo em ordem crescente
+                    do{
+                        TextoDoMenu(3);
+                        cout << "1. Tipo de Servico.\n2. Por OS.\n\nDeseja mostrar todas ordens de servico por:";
+                        cin >> op;
+                        cin.ignore();
+                    }while(op != 1 && op !=2); 
+                    
+                    if(op == 1){
+                        do{
+                            TextoDoMenu(3);
+                            cout << "1. Impressoes 3D.\n2. Corte a Laser\n3. Corte CNC\n\nDeseja mostrar todas ordens de servico por:";
+                            cin >> op;
+                            cin.ignore();
+                        }while(op != 1 && op !=2 && op != 3);
+                        if(op == 1){
+                            TextoDoMenu(10);
+                            for(int i = 0; i < lista_impressao.size(); i++){
+                                lista_impressao[i].viewPrint();
+                            } 
+                        }
+                        else if(op ==2){
+                            TextoDoMenu(11);
+                            for(int i = 0; i < lista_laser.size(); i++){
+                                lista_laser[i].viewLaser();
+                            }
+                        }
+                        else{   
+                            TextoDoMenu(12);
+                            for(int i = 0; i < lista_cnc.size(); i++){
+                                lista_cnc[i].viewCNC();
+                            }
+                        }
+                    }
+                    else if(op == 2){
+                        TextoDoMenu(3);
                         for(int i = 0; i <= ordem_de_servico; i++){
                             MostrarServico(i);
                         }
-                    }
-                    else{
-                        cout << "lista zerada." << endl << endl;
-                        system("read -p \"Enter para continuar\"");
                     }
                     break;
                 case 4:
@@ -192,6 +259,7 @@ int main(){
             }
             if(op != 0) op = -1;
     }while(op != 0);
+    
     save_file();
 
     return 0;
@@ -203,9 +271,13 @@ void TextoDoMenu(int opcao){
         case 1: cout << "\t\tCriar Ordem de Servico.\n\n\n"; break;
         case 2: cout << "\t\tInserir Item A Ordem de Servico.\n\n\n"; break;
         case 3: cout << "\t\tLista de Ordens de Servico.\n\n\n"; break;
-        case 4: cout << "\t\tCalculo de Custo de Ordem de Servico.\n\n\n"; break;
-        case 5: cout << "\t\tGerar Recibo de Ordem de Servico.\n\n\n"; break;
-        case 9: cout << "\t\tSelecao de Tipo de Servico.\n\n\n";
+        case 4: cout << "\t\tCalculo de Custo de Ordem de ervico\n\n\n"; break;
+        case 5: cout << "\t\tGerar Recibo de Ordem de Servico\n\n\n"; break;
+
+        case 9: cout << "\t\tSelecao de Tipo de Servico\n\n\n"; break;
+        case 10: cout << "\t\tLista de Impressoes 3D\n\n\n"; break;
+        case 11: cout << "\t\tLista de Cortes a Laser\n\n\n"; break;
+        case 12: cout << "\t\tLista de Cortes CNC\n\n\n"; break;
     }
 }
 int MenuPrincipal(){
@@ -233,12 +305,9 @@ void MostrarServico(int os){
     for(int i = 0; i < lista_laser.size(); i++){
         if(os == lista_laser[i].get_os()) lista_laser[i].viewLaser(); 
     }
-    /*
-    for(int i = 0; i < lista_impressao.size(); i++){
+    for(int i = 0; i < lista_cnc.size(); i++){
         if(os == lista_cnc[i].get_os()) lista_cnc[i].viewCNC(); 
     }
-    */
-   system("read -p \"Enter para continuar\"");
 }
 int SelecionarServico(){
     int servico = 0;
