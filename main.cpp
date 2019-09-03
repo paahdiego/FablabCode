@@ -758,7 +758,7 @@ void load_file(){
 			lista_cnc.push_back(*auxcnc);
 		}
 	}
-    laser.close();
+    cncfresa.close();
 
     ordem_de_servico = bigger + 1;
 }
