@@ -30,6 +30,11 @@ int MenuPrincipal();
 int SelecionarServico();
 void TextoDoMenu(int opcao);
 void MostrarServico(int os);
+void CriarOrdemDeServico(int opcao = 0);
+
+void CriarImpressao(int opcao = 0);
+void CriarLaser(int opcao = 0);
+void CriarCNC(int opcao = 0);
 /*
     filament_type =     1 ABS.  2 PLA.
     tipo_os =   1. 3D.    2. Laser.   3. CNC FRESA.
@@ -42,9 +47,10 @@ class Impressao{
         int filament_type, minutes, os, tipo_os, impressora; //1 ABS.   2 PLA. // 1. Prusa    2. MakerBot
         char aux[10];
     public:
+        Impressao(){ tipo_os = 1; }
         void set_os(int ordem){ os = ordem; }
         void set_impressora(int printer){ impressora = printer; }
-        void set_ClientName(char nome[]){ strcpy(cliente, nome); }
+        void set_cliente(char nome[]){ strcpy(cliente, nome); }
         void set_name(char nome[]){ strcpy(objectName, nome); }
         void set_layer_height(float height){ layer_height = height; }
         void set_infill(float fill){ infill = fill; }
@@ -56,7 +62,7 @@ class Impressao{
         void set_tipo_os(int tipo){ tipo_os = tipo; }
 
         int get_os() const { return os; }
-        char * get_client(){ return cliente;}
+        char * get_cliente(){ return cliente;}
         char * get_objectName(){ return objectName; }
         float get_layer_height(){ return layer_height; }
         float get_infill(){ return infill; }
@@ -80,6 +86,7 @@ class Impressao{
             else if(filament_type == 2) strcpy(aux, "PLA"); 
             return aux;
         }
+        int get_printer_int(){ return impressora; }
         char * get_printer(){
             if(impressora == 1) strcpy(aux, "Prusa i3 MK2");
             else if(impressora == 2) strcpy(aux, "MakerBot Replicator 2x");
@@ -119,6 +126,7 @@ class CorteALaser{
         void set_perimetro(float Perimetro){ perimetro = Perimetro; }
         void set_minutes(int min){ minutes = min; }
         void set_os(int Os){ os = Os; }
+        void set_tipo_os(int tipo){ tipo_os = tipo; } 
         
         int get_os() const { return os; }
         int get_tipo_os(){ return tipo_os; }
@@ -158,6 +166,7 @@ class CorteCNC{
         void set_perimetro(float Perimetro){ perimetro = Perimetro; }
         void set_minutes(int min){ minutes = min; }
         void set_os(int Os){ os = Os; }
+        void set_tipo_os(int tipo){ tipo_os = tipo; }
         
         int get_os() const { return os; }
         int get_tipo_os(){ return tipo_os; }
@@ -213,9 +222,12 @@ int main(){
         op = MenuPrincipal();
         
         switch(op){
-                case 1:        
+                case 0: break;
+                case 1: 
+                    CriarOrdemDeServico();       
                     break;
                 case 2:
+                    CriarOrdemDeServico(1);
                     break;
                 case 3:
                     do{
@@ -294,6 +306,9 @@ void TextoDoMenu(int opcao){
         case 10: cout << "\t\tLista de Impressoes 3D\n\n\n"; break;
         case 11: cout << "\t\tLista de Cortes a Laser\n\n\n"; break;
         case 12: cout << "\t\tLista de Cortes CNC\n\n\n"; break;
+        case 13: cout << "\t\tCadastrar Impressao 3D\n\n\n"; break;
+        case 14: cout << "\t\tCadastrar Corte a Laser\n\n\n"; break;
+        case 15: cout << "\t\tCadastrar Corte CNC\n\n\n"; break;
     }
 }
 int MenuPrincipal(){
@@ -338,6 +353,266 @@ int SelecionarServico(){
 
     return servico;
 }
+void CriarOrdemDeServico(int opcao){
+    TextoDoMenu(1);
+
+    int tipo_servico = SelecionarServico();
+    switch (tipo_servico){
+    case 1: 
+        CriarImpressao(opcao);
+        break;
+    case 2:
+        CriarLaser(opcao);
+        break;
+    case 3:
+        CriarCNC(opcao);
+        break;
+    default:
+        break;
+    }
+
+}
+void CriarImpressao(int opcao){
+    char objectName[100], cliente[100];
+    int filament_type, minutes, os_search, printer;
+    float layer_height, filament_used, infill; 
+    
+    bool check = false;
+    
+    Impressao aux;
+
+    if(opcao == 0){    
+        TextoDoMenu(1);
+        cout << "Digite o nome do cliente: ";
+        cin.getline(cliente, 100);
+        aux.set_cliente(cliente);
+    }
+    else if(opcao == 1){
+        do{
+            TextoDoMenu(2);
+            cout << "digite o numero da OS: ";
+            cin >> os_search;
+            cin.ignore();
+
+            for(int i = 0; i < lista_impressao.size(); i++){
+                if(os_search == lista_impressao[i].get_os()) check = true; 
+                if(check) { 
+                    aux.set_cliente( lista_impressao[i].get_cliente() );
+                    aux.set_os( lista_impressao[i].get_os() );
+                    break;
+                }
+            }
+            if(!check){
+                TextoDoMenu(2);
+                cout << "ordem de servico nao cadastrada.\n\nDigite novamente.";
+                system("read -p \"Enter para continuar\"");
+            } 
+        }while(!check);
+    }
+    
+    do{
+        TextoDoMenu(13);
+        cout << "Digite o titulo da impressao: ";
+        cin.getline(objectName, 100);
+
+        TextoDoMenu(13);        
+        cout << "1. Prusa i3 MK2\n2. MakerBot Replicator\n\n Digite a impressora 3D: ";
+        cin >> printer;
+
+        TextoDoMenu(13);
+        cout << "1. ABS\n2. PLA\n\nTipo de filamento: ";
+        cin >> filament_type;
+
+        TextoDoMenu(13);
+        cout << "Altura de camada: ";
+        cin >> layer_height;
+
+        TextoDoMenu(13);
+        cout << "Infill (%): ";
+        cin >> infill;
+
+        TextoDoMenu(13);
+        cout << "quantidade de filamento (gramas): ";
+        cin >> filament_used;
+
+        TextoDoMenu(13);        
+        cout << "tempo de impressao (minutos): ";
+        cin >> minutes;        
+
+        if(opcao == 0) aux.set_os(ordem_de_servico);
+        
+        aux.set_name(objectName);
+        aux.set_layer_height(layer_height);
+        aux.set_infill(infill);
+        aux.set_filament_type(filament_type);
+        aux.set_filament_used(filament_used);
+        aux.set_time(minutes);
+        aux.set_impressora(printer);
+        lista_impressao.push_back(aux);
+
+        TextoDoMenu(13);
+        cout << "Deseja inserir outra peca? \n\n1.SIM\n2.NAO \n\nopcao: ";
+        cin >> op;
+        cin.ignore();
+    }while(op == 1);
+    
+    if(opcao == 0) ordem_de_servico++;
+}
+void CriarLaser(int opcao){
+    char objectName[100], cliente[100], material[50];
+    int minutes, os_search;
+    float area, perimetro;
+    
+    bool check = false;
+    
+    CorteALaser aux;
+
+    if(opcao == 0){    
+        TextoDoMenu(1);
+        cout << "Digite o nome do cliente: ";
+        cin.getline(cliente, 100);
+        aux.set_cliente(cliente);
+    }
+    else if(opcao == 1){
+        do{
+            TextoDoMenu(2);
+            cout << "digite o numero da OS: ";
+            cin >> os_search;
+            cin.ignore();
+
+            for(int i = 0; i < lista_laser.size(); i++){
+                if(os_search == lista_laser[i].get_os()) check = true; 
+                if(check) { 
+                    aux.set_cliente( lista_laser[i].get_cliente() );
+                    aux.set_os( lista_laser[i].get_os() );
+                    break;
+                }
+            }
+            if(!check){
+                TextoDoMenu(2);
+                cout << "ordem de servico nao cadastrada.\n\nDigite novamente.";
+                system("read -p \"Enter para continuar\"");
+            } 
+        }while(!check);
+    }
+    
+    do{
+        if(opcao == 0) aux.set_os(ordem_de_servico);
+
+        TextoDoMenu(14);
+        cout << "digite o nome do corte a laser: ";
+        cin.getline(objectName, 100);
+
+        TextoDoMenu(14);
+        cout << "digite o material: ";
+        cin.getline(material, 50);
+
+        TextoDoMenu(14);        
+        cout << "area de corte: ";
+        cin >> area;
+
+        TextoDoMenu(14);        
+        cout << "perimetro: ";
+        cin >> perimetro;
+
+        TextoDoMenu(14);        
+        cout << "tempo de corte (minutos): ";
+        cin >> minutes;        
+
+        aux.set_objectName(objectName);
+        aux.set_material(material);
+        aux.set_area(area);
+        aux.set_perimetro(perimetro);
+        aux.set_minutes(minutes);
+
+        lista_laser.push_back(aux);
+
+        TextoDoMenu(14);
+        cout << "deseja inserir outra peca? \n\n1.SIM\n2.NAO \n\nopcao: ";
+        cin >> op;
+        cin.ignore();
+    }while(op == 1);
+    
+    if(opcao == 0) ordem_de_servico++;
+}
+void CriarCNC(int opcao){
+    char objectName[100], cliente[100], material[50];
+    int minutes, os_search;
+    float area, perimetro;
+    
+    bool check = false;
+    
+    CorteCNC aux;
+
+    if(opcao == 0){    
+        TextoDoMenu(1);
+        cout << "Digite o nome do cliente: ";
+        cin.getline(cliente, 100);
+        aux.set_cliente(cliente);
+    }
+    else if(opcao == 1){
+        do{
+            TextoDoMenu(2);
+            cout << "digite o numero da OS: ";
+            cin >> os_search;
+            cin.ignore();
+
+            for(int i = 0; i < lista_cnc.size(); i++){
+                if(os_search == lista_cnc[i].get_os()) check = true; 
+                if(check) { 
+                    aux.set_cliente( lista_cnc[i].get_cliente() );
+                    aux.set_os( lista_cnc[i].get_os() );
+                    break;
+                }
+            }
+            if(!check){
+                TextoDoMenu(2);
+                cout << "ordem de servico nao cadastrada.\n\nDigite novamente.";
+                system("read -p \"Enter para continuar\"");
+            } 
+        }while(!check);
+    }
+    
+    do{
+        if(opcao == 0) aux.set_os(ordem_de_servico);
+
+        TextoDoMenu(15);
+        cout << "digite o nome do corte a laser: ";
+        cin.getline(objectName, 100);
+
+        TextoDoMenu(15);
+        cout << "digite o material: ";
+        cin.getline(material, 50);
+
+        TextoDoMenu(15);        
+        cout << "area de corte: ";
+        cin >> area;
+
+        TextoDoMenu(15);        
+        cout << "perimetro: ";
+        cin >> perimetro;
+
+        TextoDoMenu(15);        
+        cout << "tempo de corte (minutos): ";
+        cin >> minutes;        
+
+        aux.set_objectName(objectName);
+        aux.set_material(material);
+        aux.set_area(area);
+        aux.set_perimetro(perimetro);
+        aux.set_minutes(minutes);
+
+        lista_cnc.push_back(aux);
+
+        TextoDoMenu(15);
+        cout << "deseja inserir outra peca? \n\n1.SIM\n2.NAO \n\nopcao: ";
+        cin >> op;
+        cin.ignore();
+    }while(op == 1);
+    
+    if(opcao == 0) ordem_de_servico++;
+}
+
 float RoundCost(float value){
     float Faux = 0;
     int Iaux = 0;
@@ -357,7 +632,10 @@ void load_file(){
 	char auxC[100];
 
     Impressao *auximpressoes = new Impressao;
+    CorteALaser *auxlaser = new CorteALaser;
+    CorteCNC *auxcnc = new CorteCNC;
 	string aux[12];
+    string auxLaserCNC[9];
 	
 	bool check = false;
 
@@ -384,7 +662,7 @@ void load_file(){
 		if(check){
             auximpressoes->set_os(atoi(aux[0].c_str()));
             strcpy(auxC, aux[1].c_str());
-			auximpressoes->set_ClientName(auxC);
+			auximpressoes->set_cliente(auxC);
             strcpy(auxC, aux[2].c_str());
 			auximpressoes->set_name(auxC);
 			auximpressoes->set_layer_height( atof(aux[3].c_str()));
@@ -404,6 +682,84 @@ void load_file(){
 	}
     impressoes.close();
 
+    check = false;
+    laser.open("laser.csv", ios::in);
+	if(!laser.is_open()) cout << "arquivo laser.csv nao carregado" << endl;
+
+	while(laser.good()){
+		getline(laser, auxLaserCNC[0], ';');
+		if(auxLaserCNC[0] != ""){
+			getline(laser, auxLaserCNC[1], ';');
+            getline(laser, auxLaserCNC[2], ';');
+            getline(laser, auxLaserCNC[3], ';');
+            getline(laser, auxLaserCNC[4], ';');
+            getline(laser, auxLaserCNC[5], ';');
+            getline(laser, auxLaserCNC[6], ';');
+            getline(laser, auxLaserCNC[7], ';');
+			getline(laser, auxLaserCNC[8], '\n');
+            check = true; // marca como verdadeiro se o arquivo tiver informacoes
+		}
+		
+		if(check){
+            auxlaser->set_os(atoi(auxLaserCNC[0].c_str()));
+            strcpy(auxC, auxLaserCNC[1].c_str());
+			auxlaser->set_cliente(auxC);
+            strcpy(auxC, auxLaserCNC[2].c_str());
+			auxlaser->set_objectName(auxC);
+            auxlaser->set_area(atof(auxLaserCNC[3].c_str()));
+            auxlaser->set_perimetro(atof(auxLaserCNC[4].c_str()));
+            strcpy(auxC, auxLaserCNC[5].c_str());
+            auxlaser->set_material(auxC);
+            auxlaser->set_tipo_os(atoi(auxLaserCNC[6].c_str()));
+            auxlaser->set_minutes(atoi(auxLaserCNC[7].c_str()));
+            auxlaser->set_cost_time(atof(auxLaserCNC[8].c_str()));
+
+            if(auxlaser->get_os() > bigger) bigger = auxlaser->get_os();
+
+			lista_laser.push_back(*auxlaser);
+		}
+	}
+    laser.close();
+
+    check = false;
+    cncfresa.open("cncfresa.csv", ios::in);
+	if(!cncfresa.is_open()) cout << "arquivo laser.csv nao carregado" << endl;
+
+	while(cncfresa.good()){
+		getline(cncfresa, auxLaserCNC[0], ';');
+		if(auxLaserCNC[0] != ""){
+			getline(cncfresa, auxLaserCNC[1], ';');
+            getline(cncfresa, auxLaserCNC[2], ';');
+            getline(cncfresa, auxLaserCNC[3], ';');
+            getline(cncfresa, auxLaserCNC[4], ';');
+            getline(cncfresa, auxLaserCNC[5], ';');
+            getline(cncfresa, auxLaserCNC[6], ';');
+            getline(cncfresa, auxLaserCNC[7], ';');
+			getline(cncfresa, auxLaserCNC[8], '\n');
+            check = true;
+		}
+		
+		if(check){
+            auxcnc->set_os(atoi(auxLaserCNC[0].c_str()));
+            strcpy(auxC, auxLaserCNC[1].c_str());
+			auxcnc->set_cliente(auxC);
+            strcpy(auxC, auxLaserCNC[2].c_str());
+			auxcnc->set_objectName(auxC);
+            auxcnc->set_area(atof(auxLaserCNC[3].c_str()));
+            auxcnc->set_perimetro(atof(auxLaserCNC[4].c_str()));
+            strcpy(auxC, auxLaserCNC[5].c_str());
+            auxcnc->set_material(auxC);
+            auxcnc->set_tipo_os(atoi(auxLaserCNC[6].c_str()));
+            auxcnc->set_minutes(atoi(auxLaserCNC[7].c_str()));
+            auxcnc->set_cost_time(atof(auxLaserCNC[8].c_str()));
+
+            if(auxcnc->get_os() > bigger) bigger = auxcnc->get_os();
+
+			lista_cnc.push_back(*auxcnc);
+		}
+	}
+    laser.close();
+
     ordem_de_servico = bigger + 1;
 }
 void save_file(){
@@ -411,7 +767,7 @@ void save_file(){
 	
 	for(int i = 0; i < lista_impressao.size(); i++){
         impressoes << lista_impressao[i].get_os() << ";";
-        impressoes << lista_impressao[i].get_client() << ";";    
+        impressoes << lista_impressao[i].get_cliente() << ";";    
 		impressoes << lista_impressao[i].get_objectName() << ";";
 		impressoes << lista_impressao[i].get_layer_height() << ";";
 		impressoes << lista_impressao[i].get_infill() << ";";
@@ -419,15 +775,43 @@ void save_file(){
         impressoes << lista_impressao[i].get_cost_time() << ";";
 		impressoes << lista_impressao[i].get_filament_used() << ";";
 		impressoes << lista_impressao[i].get_filament_type() << ";";
-        impressoes << lista_impressao[i].get_minutes() << "\n";
-        impressoes << lista_impressao[i].get_printer() << "\n";
+        impressoes << lista_impressao[i].get_minutes() << ";";
+        impressoes << lista_impressao[i].get_printer_int() << ";";
 
-		if(i < lista_impressao.size() - 1){
-			impressoes << lista_impressao[i].get_tipo_os() << "\n";
-		}
-		else{
-			impressoes << lista_impressao[i].get_tipo_os();
-		}
+		if(i < lista_impressao.size() - 1) impressoes << lista_impressao[i].get_tipo_os() << "\n";
+		else impressoes << lista_impressao[i].get_tipo_os();
 	}	
 	impressoes.close();
+
+    laser.open("laser.csv", ios::out);
+    for(int i = 0; i < lista_laser.size(); i++){
+        laser << lista_laser[i].get_os() << ";";
+        laser << lista_laser[i].get_cliente() << ";";
+        laser << lista_laser[i].get_objectName() << ";";
+        laser << lista_laser[i].get_area() << ";";
+        laser << lista_laser[i].get_perimetro() << ";";
+        laser << lista_laser[i].get_material() << ";";
+        laser << lista_laser[i].get_tipo_os() << ";";
+        laser << lista_laser[i].get_minutes() << ";";
+        
+        if(i < lista_laser.size() - 1) laser << lista_laser[i].get_cost_time() << "\n";
+        else laser << lista_laser[i].get_cost_time();
+    }
+    laser.close();
+
+    cncfresa.open("cncfresa.csv", ios::out);
+    for(int i = 0; i < lista_cnc.size(); i++){
+        cncfresa << lista_cnc[i].get_os() << ";";
+        cncfresa << lista_cnc[i].get_cliente() << ";";
+        cncfresa << lista_cnc[i].get_objectName() << ";";
+        cncfresa << lista_cnc[i].get_area() << ";";
+        cncfresa << lista_cnc[i].get_perimetro() << ";";
+        cncfresa << lista_cnc[i].get_material() << ";";
+        cncfresa << lista_cnc[i].get_tipo_os() << ";";
+        cncfresa << lista_cnc[i].get_minutes() << ";";
+        
+        if(i < lista_cnc.size() - 1) cncfresa << lista_cnc[i].get_cost_time() << "\n";
+        else cncfresa << lista_cnc[i].get_cost_time();
+    }
+    cncfresa.close();
 }
