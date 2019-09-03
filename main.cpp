@@ -120,7 +120,7 @@ class CorteALaser{
         void set_minutes(int min){ minutes = min; }
         void set_os(int Os){ os = Os; }
         
-        int get_os(){ return os; }
+        int get_os() const { return os; }
         int get_tipo_os(){ return tipo_os; }
         char * get_material(){ return material; }
         char * get_cliente(){ return cliente; }
@@ -159,7 +159,7 @@ class CorteCNC{
         void set_minutes(int min){ minutes = min; }
         void set_os(int Os){ os = Os; }
         
-        int get_os(){ return os; }
+        int get_os() const { return os; }
         int get_tipo_os(){ return tipo_os; }
         char * get_cliente(){ return cliente; }
         char * get_objectName(){ return objectName; }
@@ -186,27 +186,41 @@ vector <Impressao> lista_impressao;
 vector <CorteALaser> lista_laser;
 vector <CorteCNC> lista_cnc;
 
+bool prioridade_print(const Impressao &a, const Impressao &b) {
+    return ( a.get_os() < b.get_os() );
+}
+bool prioridade_laser(const CorteALaser &a, const CorteALaser &b) {
+    return ( a.get_os() < b.get_os() );
+}
+bool prioridade_cnc(const CorteCNC &a, const CorteCNC &b) {
+    return ( a.get_os() < b.get_os() );
+}
+
 int main(){
     
     load_file();
-    cout << "ordem de servico: " << ordem_de_servico << endl; 
-    system("read -p \"Enter para continuar\"");
+    
+    /*
+        cout << "ordem de servico: " << ordem_de_servico << endl; 
+        system("read -p \"Enter para continuar\"");
+    */
 
     do{ 
+        sort(lista_impressao.begin(), lista_impressao.end(), prioridade_print);
+        sort(lista_laser.begin(), lista_laser.end(), prioridade_laser);
+        sort(lista_cnc.begin(), lista_cnc.end(), prioridade_cnc);
 
         op = MenuPrincipal();
         
         switch(op){
-                case 1:
-                                
+                case 1:        
                     break;
                 case 2:
                     break;
                 case 3:
-                    //mostrar somente por tipo em ordem crescente
                     do{
                         TextoDoMenu(3);
-                        cout << "1. Tipo de Servico.\n2. Por OS.\n\nDeseja mostrar todas ordens de servico por:";
+                        cout << "1. Tipo de Servico.\n2. Por OS.\n\nDeseja mostrar todas ordens de servico por: ";
                         cin >> op;
                         cin.ignore();
                     }while(op != 1 && op !=2); 
@@ -214,10 +228,11 @@ int main(){
                     if(op == 1){
                         do{
                             TextoDoMenu(3);
-                            cout << "1. Impressoes 3D.\n2. Corte a Laser\n3. Corte CNC\n\nDeseja mostrar todas ordens de servico por:";
+                            cout << "1. Impressoes 3D.\n2. Corte a Laser\n3. Corte CNC\n\nDeseja mostrar todas ordens de qual servico: ";
                             cin >> op;
                             cin.ignore();
                         }while(op != 1 && op !=2 && op != 3);
+                        
                         if(op == 1){
                             TextoDoMenu(10);
                             for(int i = 0; i < lista_impressao.size(); i++){
@@ -243,6 +258,7 @@ int main(){
                             MostrarServico(i);
                         }
                     }
+                    system("read -p \"Enter para continuar\"");
                     break;
                 case 4:
                     system("clear");
@@ -268,10 +284,10 @@ void TextoDoMenu(int opcao){
     system("clear");
     switch(opcao){
         case -1: cout << "\t\tMenu Principal.\n\n\n"; break;
-        case 1: cout << "\t\tCriar Ordem de Servico.\n\n\n"; break;
-        case 2: cout << "\t\tInserir Item A Ordem de Servico.\n\n\n"; break;
-        case 3: cout << "\t\tLista de Ordens de Servico.\n\n\n"; break;
-        case 4: cout << "\t\tCalculo de Custo de Ordem de ervico\n\n\n"; break;
+        case 1: cout << "\t\tCriar Ordem de Servico\n\n\n"; break;
+        case 2: cout << "\t\tInserir Item A Ordem de Servico\n\n\n"; break;
+        case 3: cout << "\t\tLista de Ordens de Servico\n\n\n"; break;
+        case 4: cout << "\t\tCalculo de Custo de Ordem de Servico\n\n\n"; break;
         case 5: cout << "\t\tGerar Recibo de Ordem de Servico\n\n\n"; break;
 
         case 9: cout << "\t\tSelecao de Tipo de Servico\n\n\n"; break;
@@ -378,8 +394,8 @@ void load_file(){
 			auximpressoes->set_filament_used(atof(aux[7].c_str()));
             auximpressoes->set_filament_type(atoi(aux[8].c_str()));
             auximpressoes->set_time(atoi(aux[9].c_str()));
-            auximpressoes->set_impressora(atoi(aux[10].c_str()));
-            auximpressoes->set_tipo_os(atoi(aux[11].c_str()));
+            auximpressoes->set_tipo_os(atoi(aux[10].c_str()));
+            auximpressoes->set_impressora(atoi(aux[11].c_str()));
 
             if(auximpressoes->get_os() > bigger) bigger = auximpressoes->get_os();
 
