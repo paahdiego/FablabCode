@@ -628,7 +628,7 @@ float RoundCost(float value){
     return value;
 }
 void load_file(){
-    int bigger = 0;
+    int bigger = -1;
 	char auxC[100];
 
     Impressao *auximpressoes = new Impressao;
