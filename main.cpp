@@ -1,3 +1,13 @@
+/*
+    Autor: Patrick Diego - Engenharia Elétrica UFPB.
+    Código: FABLABCODE.
+
+    Descrição: 
+        Código utilizado para cadastro e calculo de custo dos serviços realizados pelo FABLAB UFPB.
+
+    @Paahdiego.
+*/
+
 #include <iostream>
 #include <vector>
 #include <cstring>
@@ -15,43 +25,57 @@ using namespace std;
 
 static int ordem_de_servico = 0;
 int op = -1;
+char tipo_do_servico[100];
+string teste =  "______________________________________\n\n";
 
 fstream impressoes;
 fstream laser;
 fstream cncfresa;
 fstream recibo;
 
-float RoundCost(float value);
+/*
+    Algumas Variaveis e seus usos.
+    
+    filament_type =     
+        1 ABS.  2 PLA.
+    tipo_os =   
+        1. 3D.    2. Laser.   3. CNC FRESA.
+    impressora = 
+        1. Prusa    2. MakerBot
+*/
 
+//Funcoes que Carregam e Salvam os dados em seus respectivos .csv
 void load_file();
 void save_file();
 
-int MenuPrincipal();
-int SelecionarServico();
-void TextoDoMenu(int opcao);
-void MostrarServico(int os);
-void CriarOrdemDeServico(int opcao = 0);
+//Funcoes do Programa
+int MenuPrincipal(); // Auto-indicativo
+int SelecionarServico(); // Selecao de tipo de Servico (tipo_os) usada em diversas partes do programa
+float RoundCost(float value); // Corrige o Valor float para um formato Currency
+void TextoDoMenu(int opcao); //Gambiarra
+void MostrarServico(int os); //Mostra os dados de uma OS 
+void CriarOrdemDeServico(int opcao = 0); // Auto-indicativo
+void CriarImpressao(int opcao = 0); // Cria uma ordem do tipo Impressao
+void CriarLaser(int opcao = 0); //Leia acima 
+void CriarCNC(int opcao = 0); //Leia acima depois de acima
+char * tipo_de_servico(int tipo);  // Retorna o texto especificando o tipo de servico
+bool validacao_int(int init, int final, int value, int text_menu); // validacao de inteiros usada em diversas partes do programa
+void CalculoValorTotalOS();
+void CalculoReciboImpressao();
 
-void CriarImpressao(int opcao = 0);
-void CriarLaser(int opcao = 0);
-void CriarCNC(int opcao = 0);
-/*
-    filament_type =     1 ABS.  2 PLA.
-    tipo_os =   1. 3D.    2. Laser.   3. CNC FRESA.
-*/
-
+//Classes usadas no programa
 class Impressao{
     protected:
         char objectName[100], cliente[100];
         float layer_height, infill, cost_time, cost_used, filament_used;
-        int filament_type, minutes, os, tipo_os, impressora; //1 ABS.   2 PLA. // 1. Prusa    2. MakerBot
-        char aux[10];
+        int filament_type, minutes, os, tipo_os, impressora;
+        char aux[100];
     public:
         Impressao(){ tipo_os = 1; }
         void set_os(int ordem){ os = ordem; }
         void set_impressora(int printer){ impressora = printer; }
         void set_cliente(char nome[]){ strcpy(cliente, nome); }
-        void set_name(char nome[]){ strcpy(objectName, nome); }
+        void set_objectName(char nome[]){ strcpy(objectName, nome); }
         void set_layer_height(float height){ layer_height = height; }
         void set_infill(float fill){ infill = fill; }
         void set_filament_type(int type){ filament_type = type; }
@@ -93,21 +117,25 @@ class Impressao{
             else strcpy(aux, "XYZ Printing");
             return aux; 
         }
-        void viewPrint(){
+        void viewPrint(int option = 0){
             cout << "Ordem de servico: " << os << endl;
-            cout << "Tipo de servico: " << tipo_os << endl;
             cout << "Nome do cliente: " << cliente << endl;
-            cout << "Impressora: " << impressora << endl;
+            cout << "Tipo de servico: " << tipo_de_servico(tipo_os) << endl;
+            cout << "Impressora: " << get_printer() << endl;
             cout << "Impressao: " << objectName << endl;
-            cout << "Altura de camada: " << layer_height << "mm" << endl;
-            cout << "Infill: " << infill << "%" << endl;
-            cout << "Filamento: " << get_filament_type_name() << endl;
-            cout << "Filamento usado: " << filament_used << " gramas" << endl;
-            cout << "Tempo de impressao: " << minutes<< " minutos" << endl;
-            cout << endl;
-            cout << "Custo por tempo: R$" << get_cost_time() << endl;
-            cout << "Custo por filamento usado: R$" << get_cost_used() << endl;
-            cout << "Custo total da peca: R$" << get_cost_time() + get_cost_used() << endl << endl; 
+            
+            if(option == 1){
+                cout << "Altura de camada: " << layer_height << "mm" << endl;
+                cout << "Infill: " << infill << "%" << endl;
+                cout << "Filamento: " << get_filament_type_name() << endl;
+                cout << "Filamento usado: " << filament_used << " gramas" << endl;
+                cout << "Tempo de impressao: " << minutes<< " minutos" << endl;
+                cout << endl;
+                cout << "Custo por tempo: R$" << get_cost_time() << endl;
+                cout << "Custo por filamento usado: R$" << get_cost_used() << endl;
+                cout << "Custo total da peca: R$" << get_cost_time() + get_cost_used() << endl; 
+            }
+            cout << teste;
         }
 };
 class CorteALaser{
@@ -115,7 +143,7 @@ class CorteALaser{
         char objectName[100], cliente[100], material[50];
         float cost_time, area_de_corte, perimetro;
         int  minutes, os, tipo_os;
-        char aux[10];
+        char aux[100];
     public:
         CorteALaser(){ tipo_os = 2;}
         void set_objectName(char name[]){ strcpy(objectName, name); }
@@ -141,12 +169,19 @@ class CorteALaser{
             cost_time = RoundCost(cost_time);
             return cost_time;
         }
-        void viewLaser(){
+        void viewLaser(int option = 0){
             cout << "Ordem de servico: " << os << endl;
-            cout << "Tipo de servico: " << tipo_os << endl;
             cout << "Nome do cliente: " << cliente << endl;
+            cout << "Tipo de servico: " << tipo_de_servico(tipo_os) << endl;
             cout << "Nome do corte: " << objectName << endl;
-            cout << "Tempo de corte: " << minutes<< " minutos" << endl;
+            
+            if(option == 1){
+                cout << "Material: " << material << endl;
+                cout << "Area de corte: " << area_de_corte << endl;
+                cout << "Perimetro de corte: " << perimetro << endl;
+                cout << "Tempo de corte: " << minutes<< " minutos" << endl;
+                cout << "Custo por tempo: R$" << get_cost_time() << endl;
+            }
             cout << endl;   
         }   
 };
@@ -181,12 +216,19 @@ class CorteCNC{
             cost_time = RoundCost(cost_time);
             return cost_time;
         }
-        void viewCNC(){
+        void viewCNC(int option = 0){
             cout << "Ordem de servico: " << os << endl;
-            cout << "Tipo de servico: " << tipo_os << endl;
             cout << "Nome do cliente: " << cliente << endl;
+            cout << "Tipo de servico: " << tipo_de_servico(tipo_os) << endl;
             cout << "Nome do corte: " << objectName << endl;
-            cout << "Tempo de corte: " << minutes<< " minutos" << endl;
+            
+            if(option == 1){
+                cout << "Material: " << material << endl;
+                cout << "Area de corte: " << area_de_corte << endl;
+                cout << "Perimetro de corte: " << perimetro << endl;
+                cout << "Tempo de corte: " << minutes << " minutos" << endl;
+                cout << "Custo por tempo: R$" << get_cost_time() << endl;
+            }
             cout << endl;   
         }
 };
@@ -210,10 +252,25 @@ int main(){
     load_file();
     
     /*
+        //Area de Testes:
+
         cout << "ordem de servico: " << ordem_de_servico << endl; 
         system("read -p \"Enter para continuar\"");
-    */
 
+        for(int i = 0; i < lista_impressao.size(); i++) {
+            lista_impressao[i].viewPrint(1);
+            cout << endl;
+        }
+    
+        int value = 0;
+        bool check = false;
+        do{
+                TextoDoMenu(13);
+                cout << "1. ABS\n2. PLA\n\nTipo de filamento: ";
+                cin >> value;
+                check = validacao_int(1, 2, value, 13);
+        }while(!check);
+    */
     do{ 
         sort(lista_impressao.begin(), lista_impressao.end(), prioridade_print);
         sort(lista_laser.begin(), lista_laser.end(), prioridade_laser);
@@ -240,9 +297,11 @@ int main(){
                     if(op == 1){
                         do{
                             TextoDoMenu(3);
-                            cout << "1. Impressoes 3D.\n2. Corte a Laser\n3. Corte CNC\n\nDeseja mostrar todas ordens de qual servico: ";
-                            cin >> op;
-                            cin.ignore();
+                            //cout << "1. Impressoes 3D.\n2. Corte a Laser\n3. Corte CNC\n\nDeseja mostrar todas ordens de qual servico: ";
+                            //cin >> op;
+                            //cin.ignore();
+                            op = SelecionarServico();
+                            
                         }while(op != 1 && op !=2 && op != 3);
                         
                         if(op == 1){
@@ -273,8 +332,8 @@ int main(){
                     system("read -p \"Enter para continuar\"");
                     break;
                 case 4:
-                    system("clear");
-                    //if(lista_impressao.size() != 0) totalOS();
+                    CalculoValorTotalOS();
+                    //if(lista_impressao.size() != 0) bool checkListas(lista vazia) do something
                     break;
                 case 5:
                     system("clear");
@@ -311,6 +370,15 @@ void TextoDoMenu(int opcao){
         case 15: cout << "\t\tCadastrar Corte CNC\n\n\n"; break;
     }
 }
+char * tipo_de_servico(int tipo){
+    
+    switch (tipo){
+        case 1: strcpy(tipo_do_servico, "Impressao 3D"); break;
+        case 2: strcpy(tipo_do_servico, "Corte a Laser"); break;
+        case 3: strcpy(tipo_do_servico, "Corte CNC"); break;   
+    }
+    return tipo_do_servico;
+}
 int MenuPrincipal(){
     int opcao_menu;
     TextoDoMenu(op);
@@ -342,7 +410,6 @@ void MostrarServico(int os){
 }
 int SelecionarServico(){
     int servico = 0;
-
     do{
         system("clear");
         TextoDoMenu(9);
@@ -396,7 +463,7 @@ void CriarImpressao(int opcao){
 
             for(int i = 0; i < lista_impressao.size(); i++){
                 if(os_search == lista_impressao[i].get_os()) check = true; 
-                if(check) { 
+                if(check){ 
                     aux.set_cliente( lista_impressao[i].get_cliente() );
                     aux.set_os( lista_impressao[i].get_os() );
                     break;
@@ -414,14 +481,22 @@ void CriarImpressao(int opcao){
         TextoDoMenu(13);
         cout << "Digite o titulo da impressao: ";
         cin.getline(objectName, 100);
-
-        TextoDoMenu(13);        
-        cout << "1. Prusa i3 MK2\n2. MakerBot Replicator\n\n Digite a impressora 3D: ";
-        cin >> printer;
-
-        TextoDoMenu(13);
-        cout << "1. ABS\n2. PLA\n\nTipo de filamento: ";
-        cin >> filament_type;
+        
+        check = false;
+        do{
+            TextoDoMenu(13);        
+            cout << "1. Prusa i3 MK2\n2. MakerBot Replicator\n\nDigite a impressora 3D: ";
+            cin >> printer;
+            system("clear");
+            check = validacao_int(1, 2, printer, 13);
+        }while(!check);
+        
+        do{
+            TextoDoMenu(13);
+            cout << "1. ABS\n2. PLA\n\nTipo de filamento: ";
+            cin >> filament_type;
+            check = validacao_int(1, 2, filament_type, 13);
+        }while(!check);
 
         TextoDoMenu(13);
         cout << "Altura de camada: ";
@@ -441,7 +516,7 @@ void CriarImpressao(int opcao){
 
         if(opcao == 0) aux.set_os(ordem_de_servico);
         
-        aux.set_name(objectName);
+        aux.set_objectName(objectName);
         aux.set_layer_height(layer_height);
         aux.set_infill(infill);
         aux.set_filament_type(filament_type);
@@ -577,7 +652,7 @@ void CriarCNC(int opcao){
         if(opcao == 0) aux.set_os(ordem_de_servico);
 
         TextoDoMenu(15);
-        cout << "digite o nome do corte a laser: ";
+        cout << "digite o nome do corte: ";
         cin.getline(objectName, 100);
 
         TextoDoMenu(15);
@@ -612,7 +687,18 @@ void CriarCNC(int opcao){
     
     if(opcao == 0) ordem_de_servico++;
 }
+void CustoTotalPorOS(){
+    float total = 0;
+    int total_pecas = 0, tipo_os;
 
+    TextoDoMenu(4);
+    tipo_os = SelecionarServico();
+    switch(tipo_os){
+        case 1 : break;
+        case 2 : break;
+        case 3 : break;
+    }
+}
 float RoundCost(float value){
     float Faux = 0;
     int Iaux = 0;
@@ -625,6 +711,7 @@ float RoundCost(float value){
     Faux = float(Iaux)/100;
     value += Faux;
 
+    if(value < 0) value *= -1; //if de fresco
     return value;
 }
 void load_file(){
@@ -664,7 +751,7 @@ void load_file(){
             strcpy(auxC, aux[1].c_str());
 			auximpressoes->set_cliente(auxC);
             strcpy(auxC, aux[2].c_str());
-			auximpressoes->set_name(auxC);
+			auximpressoes->set_objectName(auxC);
 			auximpressoes->set_layer_height( atof(aux[3].c_str()));
 			auximpressoes->set_infill( atof(aux[4].c_str()));
 			auximpressoes->set_cost_used( atof(aux[5].c_str()));
@@ -776,10 +863,10 @@ void save_file(){
 		impressoes << lista_impressao[i].get_filament_used() << ";";
 		impressoes << lista_impressao[i].get_filament_type() << ";";
         impressoes << lista_impressao[i].get_minutes() << ";";
-        impressoes << lista_impressao[i].get_printer_int() << ";";
+        impressoes << lista_impressao[i].get_tipo_os() << ";";
 
-		if(i < lista_impressao.size() - 1) impressoes << lista_impressao[i].get_tipo_os() << "\n";
-		else impressoes << lista_impressao[i].get_tipo_os();
+		if(i < lista_impressao.size() - 1) impressoes << lista_impressao[i].get_printer_int() << "\n";
+		else impressoes << lista_impressao[i].get_printer_int();
 	}	
 	impressoes.close();
 
@@ -814,4 +901,20 @@ void save_file(){
         else cncfresa << lista_cnc[i].get_cost_time();
     }
     cncfresa.close();
+}
+bool validacao_int(int init, int final, int value, int text_menu){
+    bool check = false;
+    
+    for(int i = init; i <= final; i++) {
+        if(value == i){ 
+            check = true;
+            break;
+        }
+    }
+    if(!check){
+        TextoDoMenu(text_menu);
+        cout << "valor invalido digite novamente" << endl;
+        system("read -p \"Enter para continuar\"");    
+    }
+    return check;
 }
