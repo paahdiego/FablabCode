@@ -26,7 +26,7 @@ using namespace std;
 static int ordem_de_servico = 0;
 int op = -1;
 char tipo_do_servico[100];
-string teste =  "______________________________________\n\n";
+string separador =  "______________________________________\n\n";
 
 fstream impressoes;
 fstream laser;
@@ -60,8 +60,12 @@ void CriarLaser(int opcao = 0); //Leia acima
 void CriarCNC(int opcao = 0); //Leia acima depois de acima
 char * tipo_de_servico(int tipo);  // Retorna o texto especificando o tipo de servico
 bool validacao_int(int init, int final, int value, int text_menu); // validacao de inteiros usada em diversas partes do programa
-void CalculoValorTotalOS();
-void CalculoReciboImpressao();
+int validacao_os(int os, int menu); // busca uma OS nas listas
+void CalculoValorTotalOS(); //Recebe e valida uma OS para Calculo de valor total
+
+void CalculoReciboImpressao(int os); //Calculo por OS e Recibo
+void CalculoReciboLaser(int os); //Calculo por OS e Recibo
+void CalculoReciboCNC(int os); //Calculo por OS e Recibo
 
 //Classes usadas no programa
 class Impressao{
@@ -135,12 +139,12 @@ class Impressao{
                 cout << "Custo por filamento usado: R$" << get_cost_used() << endl;
                 cout << "Custo total da peca: R$" << get_cost_time() + get_cost_used() << endl; 
             }
-            cout << teste;
+            cout << separador;
         }
 };
 class CorteALaser{
     protected:
-        char objectName[100], cliente[100], material[50];
+        char objectName[100], cliente[100], material[100];
         float cost_time, area_de_corte, perimetro;
         int  minutes, os, tipo_os;
         char aux[100];
@@ -182,12 +186,12 @@ class CorteALaser{
                 cout << "Tempo de corte: " << minutes<< " minutos" << endl;
                 cout << "Custo por tempo: R$" << get_cost_time() << endl;
             }
-            cout << endl;   
+            cout << separador;   
         }   
 };
 class CorteCNC{
     protected:
-        char objectName[100], cliente[100], material[50];
+        char objectName[100], cliente[100], material[100];
         float cost_time, area_de_corte, perimetro;
         int  minutes, os, tipo_os;
         char aux[10];
@@ -229,7 +233,7 @@ class CorteCNC{
                 cout << "Tempo de corte: " << minutes << " minutos" << endl;
                 cout << "Custo por tempo: R$" << get_cost_time() << endl;
             }
-            cout << endl;   
+            cout << separador;   
         }
 };
 
@@ -368,6 +372,9 @@ void TextoDoMenu(int opcao){
         case 13: cout << "\t\tCadastrar Impressao 3D\n\n\n"; break;
         case 14: cout << "\t\tCadastrar Corte a Laser\n\n\n"; break;
         case 15: cout << "\t\tCadastrar Corte CNC\n\n\n"; break;
+        case 16: cout << "\t\tCalculo OS - Impressao 3D\n\n\n"; break;
+        case 17: cout << "\t\tCalculo OS - Corte a Laser\n\n\n"; break;
+        case 18: cout << "\t\tCalculo OS - Corte CNC\n\n\n"; break;
     }
 }
 char * tipo_de_servico(int tipo){
@@ -425,19 +432,16 @@ void CriarOrdemDeServico(int opcao){
 
     int tipo_servico = SelecionarServico();
     switch (tipo_servico){
-    case 1: 
-        CriarImpressao(opcao);
-        break;
-    case 2:
-        CriarLaser(opcao);
-        break;
-    case 3:
-        CriarCNC(opcao);
-        break;
-    default:
-        break;
+        case 1: 
+            CriarImpressao(opcao);
+            break;
+        case 2:
+            CriarLaser(opcao);
+            break;
+        case 3:
+            CriarCNC(opcao);
+            break;
     }
-
 }
 void CriarImpressao(int opcao){
     char objectName[100], cliente[100];
@@ -687,18 +691,58 @@ void CriarCNC(int opcao){
     
     if(opcao == 0) ordem_de_servico++;
 }
-void CustoTotalPorOS(){
-    float total = 0;
-    int total_pecas = 0, tipo_os;
+void CalculoValorTotalOS(){
+    int  tipo_os, os, opcao;
+    bool check = false;
 
-    TextoDoMenu(4);
-    tipo_os = SelecionarServico();
+    do{
+        TextoDoMenu(4);
+        cout << "Digite a Ordem de Servico: "; 
+        cin >> os;
+        tipo_os = validacao_os(os, 4);
+        
+        if(tipo_os != -1){
+            do{
+                TextoDoMenu(4);
+                MostrarServico(os);
+                cout << "\n\nOS Desejada selecionada?\n1. SIM\n2. NAO\n\nopcao: ";
+                cin >> opcao;
+                check = validacao_int(1, 2, opcao, 4);
+            }while(!check);
+        }
+        if(opcao == 2) tipo_os = -1;
+    }while(tipo_os == -1);    
+    
     switch(tipo_os){
-        case 1 : break;
+        case 1 : 
+            CalculoReciboImpressao(os); 
+            break;
         case 2 : break;
         case 3 : break;
     }
 }
+void CalculoReciboImpressao(int os){
+    float total_tempo = 0, total_material = 0;
+    int qt_pecas = 0, tempo_total = 0;
+    
+    TextoDoMenu(16);
+    for(int i = 0; i < lista_impressao.size(); i++){
+        if(os == lista_impressao[i].get_os()){
+            total_tempo += lista_impressao[i].get_cost_time();
+            total_material += lista_impressao[i].get_cost_used();
+            tempo_total += lista_impressao[i].get_minutes();
+            lista_impressao[i].viewPrint(1);
+            qt_pecas++;
+        } 
+    }
+    cout << "Tempo total: " << tempo_total << " minutos" << endl;    
+    cout << "Quantidade de pecas: " << qt_pecas << " un" << endl;
+    cout << "Custo total por material: R$" << RoundCost(total_material) << endl;
+    cout << "Custo total por tempo: R$" << RoundCost(total_material) << endl;
+    cout << "Custo total: R$" << RoundCost(total_material + total_tempo) << endl << endl;
+    
+    system("read -p \"Enter para continuar\"");
+} 
 float RoundCost(float value){
     float Faux = 0;
     int Iaux = 0;
@@ -917,4 +961,35 @@ bool validacao_int(int init, int final, int value, int text_menu){
         system("read -p \"Enter para continuar\"");    
     }
     return check;
+}
+int validacao_os(int os, int menu){
+    bool check = false;
+    
+    for(int i = 0; i < lista_impressao.size(); i++){
+        if(os == lista_impressao[i].get_os()) {
+            check = true;
+            return 1;
+        }
+    }
+    for(int i = 0; i < lista_laser.size(); i++){
+        if(os == lista_laser[i].get_os()) {
+            check = true;
+            return 2;
+        }
+    }
+    for(int i = 0; i < lista_cnc.size(); i++){
+        if(os == lista_cnc[i].get_os()) {
+            check = true;
+            return 3;
+        }
+    }
+
+    if(!check){
+        TextoDoMenu(menu);
+        cout << "Ordem de servico nao encontrada. Digite novamente\n"; 
+        system("read -p \"Enter para continuar\"");    
+        
+        return -1;
+    }
+    return -1;            
 }
