@@ -16,6 +16,8 @@
 #include <fstream>
 #include <cstdio>
 #include "stdc++.h"
+#include <iomanip>
+#include <sstream>
 
 using namespace std;
 
@@ -61,6 +63,7 @@ void CriarCNC(int opcao = 0); //Leia acima depois de acima
 char * tipo_de_servico(int tipo);  // Retorna o texto especificando o tipo de servico
 bool validacao_int(int init, int final, int value, int text_menu); // validacao de inteiros usada em diversas partes do programa
 int validacao_os(int os, int menu); // busca uma OS nas listas
+void RelatorioDeUso();
 void CalculoValorTotalOS(); //Recebe e valida uma OS para Calculo de valor total
 
 void CalculoReciboImpressao(int os); //Calculo por OS e Recibo
@@ -68,8 +71,9 @@ void CalculoReciboLaser(int os); //Calculo por OS e Recibo
 void CalculoReciboCNC(int os); //Calculo por OS e Recibo
 
 string SeparadorHTML(); // HTML p/ separar objetos no recibo
-string HeaderAndStyle(int tipo, int os, string cliente); // Header HTML com estilo para o recibo
-string GerarRelatorio(int tipo, int os);
+string HeaderAndStyle(int tipo, int os = -1, string cliente = ""); // Header HTML com estilo para o recibo
+string GerarRelatorio(int tipo, int os = -1);
+template <class type> string precision_to_string(type value, int precision); // Precisao de ponto flutuante em string
 
 //Classes usadas no programa
 class Impressao{
@@ -344,8 +348,7 @@ int main(){
                     //if(lista_impressao.size() != 0) bool checkListas(lista vazia) do something
                     break;
                 case 5:
-                    system("clear");
-                    //totalUSO();
+                    RelatorioDeUso(); 
                     break;    
                 default:
                     system("clear");
@@ -721,8 +724,12 @@ void CalculoValorTotalOS(){
         case 1 : 
             CalculoReciboImpressao(os); 
             break;
-        case 2 : break;
-        case 3 : break;
+        case 2 : 
+            CalculoReciboLaser(os);
+        break;
+        case 3 :
+            CalculoReciboCNC(os);
+         break;
     }
 }
 void CalculoReciboImpressao(int os){
@@ -748,7 +755,7 @@ void CalculoReciboImpressao(int os){
         cout << "Tempo total: " << tempo_total << " minutos" << endl;    
         cout << "Quantidade de pecas: " << qt_pecas << " un" << endl;
         cout << "Custo total por material: R$" << RoundCost(total_material) << endl;
-        cout << "Custo total por tempo: R$" << RoundCost(total_material) << endl;
+        cout << "Custo total por tempo: R$" << RoundCost(total_tempo) << endl;
         cout << "Custo total: R$" << RoundCost(total_material + total_tempo) << endl << endl;
 
         cout << "\nDeseja gerar o recibo?\n1. SIM\n2. NAO\n\nopcao: ";
@@ -758,8 +765,9 @@ void CalculoReciboImpressao(int os){
     }while(!check);
 
     if(opcao == 1){
-        string file_name = "recibo";
-        file_name = file_name + " " + string(lista_impressao[indice].get_cliente()) + " OS" + to_string(os) + ".html";
+       string file_name = "recibo";
+
+       file_name = file_name + " " + string(lista_impressao[indice].get_cliente()) + " OS" + to_string(os) + ".html";
 
        recibo.open(file_name.c_str(), ios::out);
 
@@ -771,8 +779,8 @@ void CalculoReciboImpressao(int os){
        recibo << "<p>Quantidade de pecas: " << qt_pecas << " unidades </p>";
        recibo << "<p>Tempo total de impressao: " << tempo_total << " minutos</p>";
        recibo << "<p>Custo total por tempo: R$ " << RoundCost(total_tempo) << "</p>";
-       recibo << "<p>Custo total por material: R$ " << RoundCost(total_material) << "</p>";
-       recibo << "<h3>Total: R$ " << RoundCost(total_tempo + total_material) << "</h3>";
+       recibo << "<p>Custo total por material: R$ "  << RoundCost(total_material) << "</p>";
+       recibo << "<h3>Total: R$" << RoundCost(total_tempo + total_material) << "</h3>";
        recibo << "</div></body></html>";
        recibo.close();
 
@@ -782,7 +790,112 @@ void CalculoReciboImpressao(int os){
     
     system("read -p \"Enter para continuar\"");
 }
- 
+void CalculoReciboLaser(int os){
+    float total_tempo = 0;
+    int qt_pecas = 0, tempo_total = 0, opcao = 0, tipo_os = -1, indice = 0;
+    bool check = false;
+    
+    do{
+        TextoDoMenu(17);
+        qt_pecas = 0; tempo_total = 0; total_tempo = 0;
+
+        for(int i = 0; i < lista_laser.size(); i++){
+            if(os == lista_laser[i].get_os()){
+                total_tempo += lista_laser[i].get_cost_time();
+                tempo_total += lista_laser[i].get_minutes();
+                lista_laser[i].viewLaser(1);
+                tipo_os = lista_laser[i].get_tipo_os();
+                indice = i;
+                qt_pecas++;
+            } 
+        }
+        cout << "Tempo total: " << tempo_total << " minutos" << endl;    
+        cout << "Quantidade de pecas: " << qt_pecas << " un" << endl;
+        cout << "Custo total por tempo: R$" << RoundCost(total_tempo) << endl;
+
+        cout << "\nDeseja gerar o recibo?\n1. SIM\n2. NAO\n\nopcao: ";
+        cin >> opcao; 
+
+        check = validacao_int(1,2,opcao, 17);
+    }while(!check);
+
+    if(opcao == 1){
+       string file_name = "recibo";
+
+       file_name = file_name + " " + string(lista_laser[indice].get_cliente()) + " OS" + to_string(os) + ".html";
+
+       recibo.open(file_name.c_str(), ios::out);
+
+       recibo << HeaderAndStyle(tipo_os, os, string(lista_laser[indice].get_cliente()));
+
+       recibo << GerarRelatorio(tipo_os, os);
+
+       recibo << "<p id=\"borda\"></p>";
+       recibo << "<p>Quantidade de pecas: " << qt_pecas << " unidades </p>";
+       recibo << "<p>Tempo total de corte: " << tempo_total << " minutos</p>";
+       recibo << "<h3>Custo total por tempo: R$" << RoundCost(total_tempo) << "</h3>";
+       recibo << "</div></body></html>";
+       recibo.close();
+
+        file_name = "open \"" + file_name + '\"';
+        system(file_name.c_str());
+    }
+    
+    system("read -p \"Enter para continuar\"");
+}
+void CalculoReciboCNC(int os){
+    float total_tempo = 0;
+    int qt_pecas = 0, tempo_total = 0, opcao = 0, tipo_os = -1, indice = 0;
+    bool check = false;
+    
+    do{
+        TextoDoMenu(18);
+        qt_pecas = 0; tempo_total = 0; total_tempo = 0;
+
+        for(int i = 0; i < lista_cnc.size(); i++){
+            if(os == lista_cnc[i].get_os()){
+                total_tempo += lista_cnc[i].get_cost_time();
+                tempo_total += lista_cnc[i].get_minutes();
+                lista_cnc[i].viewCNC(1);
+                tipo_os = lista_cnc[i].get_tipo_os();
+                indice = i;
+                qt_pecas++;
+            } 
+        }
+        cout << "Tempo total: " << tempo_total << " minutos" << endl;    
+        cout << "Quantidade de pecas: " << qt_pecas << " un" << endl;
+        cout << "Custo total por tempo: R$" << RoundCost(total_tempo) << endl;
+
+        cout << "\nDeseja gerar o recibo?\n1. SIM\n2. NAO\n\nopcao: ";
+        cin >> opcao; 
+
+        check = validacao_int(1,2,opcao, 18);
+    }while(!check);
+
+    if(opcao == 1){
+       string file_name = "recibo";
+
+       file_name = file_name + " " + string(lista_cnc[indice].get_cliente()) + " OS" + to_string(os) + ".html";
+
+       recibo.open(file_name.c_str(), ios::out);
+
+       recibo << HeaderAndStyle(tipo_os, os, string(lista_cnc[indice].get_cliente()));
+
+       recibo << GerarRelatorio(tipo_os, os);
+
+       recibo << "<p id=\"borda\"></p>";
+       recibo << "<p>Quantidade de pecas: " << qt_pecas << " unidades </p>";
+       recibo << "<p>Tempo total de corte: " << tempo_total << " minutos</p>";
+       recibo << "<h3>Custo total por tempo: R$" << RoundCost(total_tempo) << "</h3>";
+       recibo << "</div></body></html>";
+       recibo.close();
+
+        file_name = "open \"" + file_name + '\"';
+        system(file_name.c_str());
+    }
+    
+    system("read -p \"Enter para continuar\"");
+}
 float RoundCost(float value){
     float Faux = 0;
     int Iaux = 0;
@@ -1038,16 +1151,19 @@ string SeparadorHTML(){
     return sep;
 }
 string HeaderAndStyle(int tipo, int os, string cliente){
-    string head = "<!DOCTYPE html><html><head><title>Recibo</title><style>#box{width: 700px;background-color:palegoldenrod;padding-left: 1%;padding-top: 0.1%;padding-bottom: 0.5%;padding-right: 1%;}table{width: 100%;}.borda {background-color: black;}#borda{border: solid black 1px;}</style></head>";
-    head += "<body><div id=\"box\"><h2>Recibo</h2>";
-    head += "<h4>Ordem de Servico: " + to_string(os) + "</h4>";
-    head += "<h4>Tipo de Servico: " + string(tipo_de_servico(tipo)) + "</h4>";
-    head += "<h4>Cliente: " + cliente + "</h4>";
+    string aux = "Recibo";
+    if(tipo == 5) aux = " Relatorio de uso";
+    string head = "<!DOCTYPE html><html><head><title>" + aux + "</title><style>#box{width: 700px;background-color:palegoldenrod;padding-left: 1%;padding-top: 0.1%;padding-bottom: 0.5%;padding-right: 1%;}table{width: 100%;}.borda {background-color: black;}#borda{border: solid black 1px;}</style></head>";
+    head += "<body><div id=\"box\"><h2>" + aux + "</h2>";
+    if(tipo != 5){
+        head += "<h4>Ordem de Servico: " + to_string(os) + "</h4>";
+        head += "<h4>Tipo de Servico: " + string(tipo_de_servico(tipo)) + "</h4>";
+        head += "<h4>Cliente: " + cliente + "</h4>";
+    }
     return head;
 }
 string GerarRelatorio(int tipo, int os){
     string html;
-    float total = 0;
     switch(tipo){
         case 1:
             html = "<table>"; 
@@ -1056,23 +1172,95 @@ string GerarRelatorio(int tipo, int os){
                     html += SeparadorHTML();
                     html += "<tr><td>Impressora: </td><td>" + string(lista_impressao[i].get_printer()) + "</td></tr>";
                     html += "<tr><td>Impressao: </td><td>" + string(lista_impressao[i].get_objectName()) + "</td></tr>";
-                    html += "<tr><td>Altura de camada: </td><td>" + to_string(lista_impressao[i].get_layer_height()) + " mm</td></tr>";
-                    html += "<tr><td>Infill: </td><td>" + to_string(lista_impressao[i].get_infill()) + "%</td></tr>";
+                    html += "<tr><td>Altura de camada: </td><td>" + precision_to_string(lista_impressao[i].get_layer_height(), 2) + " mm</td></tr>";
+                    html += "<tr><td>Infill: </td><td>" + precision_to_string(lista_impressao[i].get_infill(), 0) + "%</td></tr>";
                     html += "<tr><td>Filamento: </td><td>" + string(lista_impressao[i].get_filament_type_name()) + "</td></tr>";
-                    html += "<tr><td>Filamento usado: </td><td>" + to_string(lista_impressao[i].get_filament_used()) + "g</td></tr>";
-                    html += "<tr><td>Tempo de impressao: </td><td>" + to_string(lista_impressao[i].get_minutes()) + " minutos</td></tr>";
-                    total = RoundCost(lista_impressao[i].get_cost_used() + lista_impressao[i].get_cost_time());
-                    html += "<tr><td>Custo por tempo: </td><td>R$" + to_string(lista_impressao[i].get_cost_time()) + "</td></tr>";
-                    html += "<tr><td>Custo por material: </td><td>R$" + to_string(lista_impressao[i].get_cost_used()) + "</td></tr>";
-                    html += "<tr><td>Custo total da peca: </td><td>R$" + to_string(total) + "</td></tr>";
+                    html += "<tr><td>Filamento usado: </td><td>" + precision_to_string(lista_impressao[i].get_filament_used(), 2) + "g</td></tr>";
+                    html += "<tr><td>Tempo de impressao: </td><td>" + precision_to_string(lista_impressao[i].get_minutes(), 2) + " minutos</td></tr>";
+                    html += "<tr><td>Custo por tempo: </td><td>R$" + precision_to_string(lista_impressao[i].get_cost_time(), 2) + "</td></tr>";
+                    html += "<tr><td>Custo por material: </td><td>R$" + precision_to_string(lista_impressao[i].get_cost_used(), 2) + "</td></tr>";
+                    html += "<tr><td>Custo total da peca: </td><td>R$" + precision_to_string(lista_impressao[i].get_cost_time() + lista_impressao[i].get_cost_used(), 2)  + "</td></tr>";
+                    html += "<tr><td></td><td></td><tr>";
+                    html += "<tr><td></td><td></td><tr>";
+                }
+            }
+            html += "</table>";  
+            break;
+        case 2:
+            html = "<table>"; 
+            for(int i = 0; i < lista_laser.size(); i++){
+                if(os == lista_laser[i].get_os()){
+                    html += SeparadorHTML();
+                    html += "<tr><td>Corte: </td><td>" + string(lista_laser[i].get_objectName()) + "</td></tr>";
+                    html += "<tr><td>Area de corte: </td><td>" + precision_to_string(lista_laser[i].get_area(), 2) + " mm^2</td></tr>";
+                    html += "<tr><td>Perimetro: </td><td>" + precision_to_string(lista_laser[i].get_perimetro(), 2) + " mm</td></tr>";
+                    html += "<tr><td>Material: </td><td>" + string(lista_laser[i].get_material()) + "</td></tr>";
+                    html += "<tr><td>Tempo de corte: </td><td>" + precision_to_string(lista_laser[i].get_minutes(), 0) + " minutos</td></tr>";
+                    html += "<tr><td>Custo por tempo: </td><td>R$" + precision_to_string(lista_laser[i].get_cost_time(), 2) + "</td></tr>";
                     html += "<tr><td></td><td></td><tr>";
                     html += "<tr><td></td><td></td><tr>";
                 }
             }
             html += "</table>";
+            break;
+        case 3:
+            html = "<table>"; 
+            for(int i = 0; i < lista_cnc.size(); i++){
+                if(os == lista_cnc[i].get_os()){
+                    html += SeparadorHTML();
+                    html += "<tr><td>Corte: </td><td>" + string(lista_cnc[i].get_objectName()) + "</td></tr>";
+                    html += "<tr><td>Area de corte: </td><td>" + precision_to_string(lista_cnc[i].get_area(), 2) + " mm^2</td></tr>";
+                    html += "<tr><td>Perimetro: </td><td>" + precision_to_string(lista_cnc[i].get_perimetro(), 2) + " mm</td></tr>";
+                    html += "<tr><td>Material: </td><td>" + string(lista_cnc[i].get_material()) + "</td></tr>";
+                    html += "<tr><td>Tempo de corte: </td><td>" + precision_to_string(lista_cnc[i].get_minutes(), 0) + " minutos</td></tr>";
+                    html += "<tr><td>Custo por tempo: </td><td>R$" + precision_to_string(lista_cnc[i].get_cost_time(), 2) + "</td></tr>";
+                    html += "<tr><td></td><td></td><tr>";
+                    html += "<tr><td></td><td></td><tr>";
+                }
+            }
+            html += "</table>";
+            break;
+        case 5:
+            int media_tempo_por_os = 0, qt_pecas = 0, media_tempo = 0, qt_os = 0;
             
-        break;
+            html = "<table>";
+        
+            for(int i = 0; i < lista_impressao.size(); i++){
+                if(!i) os = lista_impressao[i].get_os();
+                
+                if(lista_impressao[i].get_os() == os){
+                    media_tempo_por_os += lista_impressao[i].get_minutes();
+                    qt_pecas++;
+                }
+                else if(lista_impressao[i].get_os() > os){
+                    os = lista_impressao[i].get_os();
+                    media_tempo += (media_tempo_por_os / qt_pecas) + 1;
+                    media_tempo_por_os = 0;
+                    qt_pecas = 0;
 
+                }
+            }
+            html += "</table>";
+          break;
     }
     return html;
+}
+template <class type> string precision_to_string(type value, int precision){
+    stringstream stream;
+    stream << fixed << setprecision(precision) << value;    
+    string s = stream.str();
+    return s;
+}
+void RelatorioDeUso(){
+    string file_name = "Relatorio de Uso.html";
+
+       recibo.open(file_name.c_str(), ios::out);
+
+       recibo << HeaderAndStyle(5);
+       recibo << GerarRelatorio(5);
+       recibo << "</div></body></html>";
+       recibo.close();
+
+        file_name = "open \"" + file_name + '\"';
+        system(file_name.c_str());
 }
