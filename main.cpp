@@ -72,7 +72,7 @@ void CalculoReciboCNC(int os); //Calculo por OS e Recibo
 
 string SeparadorHTML(); // HTML p/ separar objetos no recibo
 string HeaderAndStyle(int tipo, int os = -1, string cliente = ""); // Header HTML com estilo para o recibo
-string GerarRelatorio(int tipo, int os = -1);
+string GerarRelatorio(int tipo, int os = -1); // funcao que passa o for nas listas e gera a string necessaria para o html
 template <class type> string precision_to_string(type value, int precision); // Precisao de ponto flutuante em string
 
 //Classes usadas no programa
@@ -258,7 +258,7 @@ bool prioridade_laser(const CorteALaser &a, const CorteALaser &b) {
 bool prioridade_cnc(const CorteCNC &a, const CorteCNC &b) {
     return ( a.get_os() < b.get_os() );
 }
-
+//main
 int main(){
     
     load_file();
@@ -1151,10 +1151,10 @@ string SeparadorHTML(){
     return sep;
 }
 string HeaderAndStyle(int tipo, int os, string cliente){
-    string aux = "Recibo";
-    if(tipo == 5) aux = " Relatorio de uso";
-    string head = "<!DOCTYPE html><html><head><title>" + aux + "</title><style>#box{width: 700px;background-color:palegoldenrod;padding-left: 1%;padding-top: 0.1%;padding-bottom: 0.5%;padding-right: 1%;}table{width: 100%;}.borda {background-color: black;}#borda{border: solid black 1px;}</style></head>";
-    head += "<body><div id=\"box\"><h2>" + aux + "</h2>";
+    string aux = "RECIBO FABLAB UFPB";
+    if(tipo == 5) aux = " RELATORIO DE USO DAS MAQUINAS";
+    string head = "<!DOCTYPE html><html><head><title>" + aux + "</title><style>#box{width: 700px;background-color:palegoldenrod;padding-left: 1%;padding-top: 0.1%;padding-bottom: 0.5%;padding-right: 1%;}table{width: 100%;}.borda {background-color: black;}#borda{border: solid black 1px;}#center{ text-align: center;}</style></head>";
+    head += "<body><div id=\"box\"><h2 id=\"center\">" + aux + "</h2>";
     if(tipo != 5){
         head += "<h4>Ordem de Servico: " + to_string(os) + "</h4>";
         head += "<h4>Tipo de Servico: " + string(tipo_de_servico(tipo)) + "</h4>";
@@ -1221,26 +1221,106 @@ string GerarRelatorio(int tipo, int os){
             html += "</table>";
             break;
         case 5:
-            int media_tempo_por_os = 0, qt_pecas = 0, media_tempo = 0, qt_os = 0;
-            
-            html = "<table>";
+            int total_de_os = 1, tempo_total = 0;
+            int tempo_prusa = 0, tempo_makerbot = 0, q_mk = 0, q_prusa = 0;
+
+            html = "<h3 id=\"center\">Impressão 3D</h3>";
+            html += SeparadorHTML(); 
+            html += "<table>";
         
             for(int i = 0; i < lista_impressao.size(); i++){
                 if(!i) os = lista_impressao[i].get_os();
-                
-                if(lista_impressao[i].get_os() == os){
-                    media_tempo_por_os += lista_impressao[i].get_minutes();
-                    qt_pecas++;
-                }
                 else if(lista_impressao[i].get_os() > os){
                     os = lista_impressao[i].get_os();
-                    media_tempo += (media_tempo_por_os / qt_pecas) + 1;
-                    media_tempo_por_os = 0;
-                    qt_pecas = 0;
-
+                    total_de_os++;
+                }
+                if(lista_impressao[i].get_printer_int() == 1){
+                    tempo_prusa += lista_impressao[i].get_minutes();
+                    q_prusa++;
+                } 
+                else if(lista_impressao[i].get_printer_int() == 2){
+                    tempo_makerbot += lista_impressao[i].get_minutes();
+                    q_mk++;
                 }
             }
+            tempo_total = tempo_makerbot + tempo_prusa;
+
+            html += SeparadorHTML();
+            html += "<tr><td>Total de OS: </td><td>" + precision_to_string(total_de_os, 2) + "</td></tr>";
+            html += "<tr><td>Total de pecas Prusa i3 MK2: </td><td>" + precision_to_string( q_prusa , 0) + " unidades</td></tr>";
+            html += "<tr><td>Total de pecas MakerBot Replicator 2x: </td><td>" + precision_to_string( q_mk , 0) + " unidades</td></tr>";
+            html += "<tr><td>Media de impressoes por OS: </td><td>" + precision_to_string(float(lista_impressao.size()) /float(total_de_os), 0) + " impressoes</td></tr>";
+            html += "<tr><td>Tempo medio por impressao: </td><td>" + precision_to_string(float(tempo_total)/float(lista_impressao.size()), 0) + " minutos</td></tr>";
+            if(q_prusa != 0) html += "<tr><td>Tempo medio por impressao Prusa: </td><td>" + precision_to_string(float(tempo_prusa)/float(q_prusa), 0) + " minutos</td></tr>";
+            if(q_mk != 0) html += "<tr><td>Tempo medio por impressao MakerBot: </td><td>" + precision_to_string(float(tempo_makerbot)/float(q_mk), 0) + " minutos</td></tr>";
+            html += "<tr><td>Tempo medio por OS: </td><td>" + precision_to_string( float(tempo_total)/float(total_de_os) , 0) + " minutos</td></tr>";
+            html += "<tr><td>Tempo total Prusa i3 MK2: </td><td>" + precision_to_string( tempo_prusa , 0) + " minutos</td></tr>";
+            html += "<tr><td>Tempo total MakerBot Replicator 2x: </td><td>" + precision_to_string( tempo_makerbot , 0) + " minutos</td></tr>";
+            html += "<tr><td></td><td></td><tr>";
+            html += "<tr><td></td><td></td><tr>";
+            html += "<tr><td></td><td></td><tr>";
             html += "</table>";
+
+            html += SeparadorHTML();
+
+            html += "<h3 id=\"center\">Corte a Laser</h3>";
+            html += SeparadorHTML(); 
+            html += "<table>";
+        
+            tempo_total = 0;
+            total_de_os = 1;
+            for(int i = 0; i < lista_laser.size(); i++){
+                if(!i) os = lista_laser[i].get_os();
+                else if(lista_laser[i].get_os() > os){
+                    os = lista_laser[i].get_os();
+                    total_de_os++;
+                }
+                tempo_total += lista_laser[i].get_minutes();
+            }
+            
+            html += SeparadorHTML();
+            html += "<tr><td>Total de OS: </td><td>" + precision_to_string(total_de_os, 0) + "</td></tr>";
+            html += "<tr><td>Total de cortes: </td><td>" + precision_to_string(lista_laser.size(), 0) + " unidades</td></tr>";
+            html += "<tr><td>Media de cortes por OS: </td><td>" + precision_to_string(float(lista_laser.size()) /float(total_de_os), 0) + " cortes</td></tr>";
+            html += "<tr><td>Tempo medio por corte: </td><td>" + precision_to_string(float(tempo_total)/float(lista_laser.size()), 0) + " minutos</td></tr>";
+            html += "<tr><td>Tempo medio por OS: </td><td>" + precision_to_string( float(tempo_total)/float(total_de_os) , 0) + " minutos</td></tr>";
+            html += "<tr><td>Tempo total: </td><td>" + precision_to_string( tempo_total , 0) + " minutos</td></tr>";
+            html += "<tr><td></td><td></td><tr>";
+            html += "<tr><td></td><td></td><tr>";
+            html += "<tr><td></td><td></td><tr>";
+            html += "</table>";
+
+            html += SeparadorHTML();
+
+            html += "<h3 id=\"center\">Corte CNC</h3>";
+            html += SeparadorHTML(); 
+            html += "<table>";
+
+            tempo_total = 0;
+            total_de_os = 1;
+            for(int i = 0; i < lista_cnc.size(); i++){
+                if(!i) os = lista_cnc[i].get_os();
+                else if(lista_cnc[i].get_os() > os){
+                    os = lista_cnc[i].get_os();
+                    total_de_os++;
+                }
+                tempo_total += lista_cnc[i].get_minutes();
+            }
+            
+            html += SeparadorHTML();
+            html += "<tr><td>Total de OS: </td><td>" + precision_to_string(total_de_os, 0) + "</td></tr>";
+            html += "<tr><td>Total de cortes: </td><td>" + precision_to_string(lista_cnc.size(), 0) + " unidades</td></tr>";
+            html += "<tr><td>Media de cortes por OS: </td><td>" + precision_to_string(float(lista_cnc.size()) /float(total_de_os), 0) + " cortes</td></tr>";
+            html += "<tr><td>Tempo medio por corte: </td><td>" + precision_to_string(float(tempo_total)/float(lista_cnc.size()), 0) + " minutos</td></tr>";
+            html += "<tr><td>Tempo medio por OS: </td><td>" + precision_to_string( float(tempo_total)/float(total_de_os) , 0) + " minutos</td></tr>";
+            html += "<tr><td>Tempo total: </td><td>" + precision_to_string( tempo_total , 0) + " minutos</td></tr>";
+            html += "<tr><td></td><td></td><tr>";
+            html += "<tr><td></td><td></td><tr>";
+            html += "<tr><td></td><td></td><tr>";
+            html += "</table>";
+
+            html += SeparadorHTML();
+
           break;
     }
     return html;
