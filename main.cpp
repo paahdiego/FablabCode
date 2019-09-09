@@ -43,7 +43,7 @@ fstream recibo;
     tipo_os =   
         1. 3D.    2. Laser.   3. CNC FRESA.
     impressora = 
-        1. Prusa    2. MakerBot
+        1. Prusa    2. MakerBot 3. XYZPrinting
 */
 
 //Funcoes que Carregam e Salvam os dados em seus respectivos .csv
@@ -307,12 +307,14 @@ int main(){
                     }while(op != 1 && op !=2); 
                     
                     if(op == 1){
+                        bool check = false;
                         do{
                             TextoDoMenu(3);
                             //cout << "1. Impressoes 3D.\n2. Corte a Laser\n3. Corte CNC\n\nDeseja mostrar todas ordens de qual servico: ";
                             //cin >> op;
                             //cin.ignore();
                             op = SelecionarServico();
+                            check = validacao_int(1, 3, op, 3);
                             
                         }while(op != 1 && op !=2 && op != 3);
                         
@@ -498,7 +500,6 @@ void CriarImpressao(int opcao){
             TextoDoMenu(13);        
             cout << "1. Prusa i3 MK2\n2. MakerBot Replicator\n\nDigite a impressora 3D: ";
             cin >> printer;
-            system("clear");
             check = validacao_int(1, 2, printer, 13);
         }while(!check);
         
@@ -594,11 +595,11 @@ void CriarLaser(int opcao){
         cin.getline(material, 50);
 
         TextoDoMenu(14);        
-        cout << "area de corte: ";
+        cout << "area de corte (mm^2): ";
         cin >> area;
 
         TextoDoMenu(14);        
-        cout << "perimetro: ";
+        cout << "perimetro (mm): ";
         cin >> perimetro;
 
         TextoDoMenu(14);        
@@ -671,11 +672,11 @@ void CriarCNC(int opcao){
         cin.getline(material, 50);
 
         TextoDoMenu(15);        
-        cout << "area de corte: ";
+        cout << "area de corte (mm^2): ";
         cin >> area;
 
         TextoDoMenu(15);        
-        cout << "perimetro: ";
+        cout << "perimetro (mm): ";
         cin >> perimetro;
 
         TextoDoMenu(15);        
