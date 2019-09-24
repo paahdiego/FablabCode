@@ -21,8 +21,8 @@
 
 using namespace std;
 
-#define PLA 130.0
-#define ABS 85.0 
+#define PLA 175.0
+#define ABS 130.0 
 
 
 static int ordem_de_servico = 0;
