@@ -56,12 +56,12 @@
 11;Antonio Felix - Eng Mecanica;Peca 2 Cabo;0.2;20;0.56;0.64;4.37;2;24;1;1
 11;Antonio Felix - Eng Mecanica;Peca 2 Boca;0.2;20;0.62;1.03;4.78;2;39;1;1
 11;Antonio Felix - Eng Mecanica;Peca 3;0.2;20;2.02;2.21;15.56;2;83;1;1
-12;Caio Surian - Baja;Orelha;20;20;0.56;0.85;4.34;2;32;1;1
+12;Caio Surian - Baja;Orelha;0.2;20;0.56;0.85;4.34;2;32;1;1
 12;Caio Surian - Baja;Cluster;0.35;10;41.08;22.39;316;2;840;1;1
-12;Caio Surian - Baja;Orelha;20;20;0.56;0.85;4.34;2;32;1;1
-12;Caio Surian - Baja;Orelha;20;20;0.56;0.85;4.34;2;32;1;1
+12;Caio Surian - Baja;Orelha;0.2;20;0.56;0.85;4.34;2;32;1;1
+12;Caio Surian - Baja;Orelha;0.2;20;0.56;0.85;4.34;2;32;1;1
 12;Caio Surian - Baja;Tampa;0.2;20;9.51;9.09;73.19;2;341;1;1
-12;Caio Surian - Baja;Orelha;20;20;0.56;0.85;4.34;2;32;1;1
+12;Caio Surian - Baja;Orelha;0.2;20;0.56;0.85;4.34;2;32;1;1
 13;Luan Caruzo - Formula-E;Separador;0.2;40;1.88;2.88;22.19;1;108;1;1
 13;Luan Caruzo - Formula-E;Cobertura;0.2;40;2.3;3.73;27.16;1;140;1;1
 13;Luan Caruzo - Formula-E;Cobertura;0.2;40;2.3;3.73;27.16;1;140;1;1
@@ -90,6 +90,12 @@
 16;Naidson Jr;Oftalmoscopio;0.2;20;0.89;1.41;6.89;2;53;1;1
 17;Wendell - Doutorado;Suporte;0.35;20;1.86;2;21.99;1;75;1;1
 17;Wendell - Doutorado;Suporte;0.35;20;1.86;2;21.99;1;75;1;1
+17;Wendell - Doutorado;Suporte;0.35;20;1.86;2;21.99;1;75;1;1
+17;Wendell - Doutorado;Suporte;0.35;20;1.86;2;21.99;1;75;1;1
+17;Wendell - Doutorado;Suporte;0.35;20;1.86;2;21.99;1;75;1;1
+17;Wendell - Doutorado;Suporte;0.35;20;1.86;2;21.99;1;75;1;1
+17;Wendell - Doutorado;Suporte;0.35;20;1.86;2;21.99;1;75;1;1
+17;Wendell - Doutorado;Suporte;0.35;20;1.86;2;21.99;1;75;1;1
 17;Wendell - Doutorado;Braco;0.35;20;2.22;2.53;26.12;1;95;1;1
 17;Wendell - Doutorado;Braco;0.35;20;2.22;2.53;26.12;1;95;1;1
 17;Wendell - Doutorado;Braco;0.35;20;2.22;2.53;26.12;1;95;1;1
@@ -99,6 +105,7 @@
 17;Wendell - Doutorado;Braco;0.35;20;2.22;2.53;26.12;1;95;1;1
 17;Wendell - Doutorado;Braco;0.35;20;2.22;2.53;26.12;1;95;1;1
 17;Wendell - Doutorado;Base Antiga;0.35;20;10.89;5.46;83.81;2;205;1;1
+17;Wendell - Doutorado;Base 1 Nova;0.35;20;16.8;8.66;129.28;2;325;1;1
 18;Alysson - Doutorado;Aeromodelo;0.2;10;2.99;6.13;35.18;1;230;1;1
 19;Sandro Marden Torres;Hub Right Parte 1;0.35;20;11.54;7.25;88.79;2;272;1;1
 19;Sandro Marden Torres;Hub Right Parte 2;0.35;20;10.15;6.32;78.14;2;237;1;1
