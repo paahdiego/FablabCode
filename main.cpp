@@ -21,9 +21,10 @@
 
 using namespace std;
 
-#define PLA 175.0
-#define ABS 130.0 
-
+#define PLA 175.0 //1 kg + frete
+#define ABS 130.0  // 1 kg + frete
+#define Frete_Resina 50
+#define Resina_3DFila 550 // 1 kg
 
 static int ordem_de_servico = 0;
 int op = -1;
@@ -43,7 +44,7 @@ fstream recibo;
     tipo_os =   
         1. 3D.    2. Laser.   3. CNC FRESA.
     impressora = 
-        1. Prusa    2. MakerBot 3. XYZPrinting
+        1. Prusa    2. MakerBot
 */
 
 //Funcoes que Carregam e Salvam os dados em seus respectivos .csv
@@ -58,8 +59,9 @@ void TextoDoMenu(int opcao); //Gambiarra
 void MostrarServico(int os); //Mostra os dados de uma OS 
 void CriarOrdemDeServico(int opcao = 0); // Auto-indicativo
 void CriarImpressao(int opcao = 0); // Cria uma ordem do tipo Impressao
-void CriarLaser(int opcao = 0); //Leia acima 
-void CriarCNC(int opcao = 0); //Leia acima depois de acima
+void CriarLaser(int opcao = 0);
+void CriarCNC(int opcao = 0);
+void CriarResina(int opcao = 0); 
 char * tipo_de_servico(int tipo);  // Retorna o texto especificando o tipo de servico
 bool validacao_int(int init, int final, int value, int text_menu); // validacao de inteiros usada em diversas partes do programa
 int validacao_os(int os, int menu); // busca uma OS nas listas
@@ -244,10 +246,54 @@ class CorteCNC{
             cout << separador;   
         }
 };
+class Resina{
+    protected:
+        char objectName[100], material_colour[100], cliente[100], aux[100];
+        float layer_height, used_material, cost_used, cost_time;
+        int minutes, brim, os, tipo_os; // brim = 1. Yes 2. No
+    public:
+        Resina(){ tipo_os = 4; }
+        void set_os(int ordem){ os = ordem; }
+        void set_cliente(char nome[]){ strcpy(cliente, nome); }
+        void set_objectName(char nome[]){ strcpy(objectName, nome); }
+        void set_layer_height(float height){ layer_height = height; }
+        void set_time(int min){ minutes = min; }
+        void set_cost_time(float cst){cost_time = cst; }
+        void set_cost_used(float cst){cost_used = cst; }
+        void set_tipo_os(int tipo){ tipo_os = tipo; }
+        void set_material_colour( char colour[]){ strcpy(material_colour, colour); }
+        void set_brim(int BR){ brim = BR; }
+        void set_used_material(float used){ used_material = used; }
+
+        int get_os() const { return os; }
+        char * get_cliente(){ return cliente;}
+        char * get_objectName(){ return objectName; }
+        float get_layer_height(){ return layer_height; }
+        int get_minutes(){ return minutes; }
+        int get_tipo_os(){ return tipo_os; }
+        char * get_brim(){ 
+            if(brim == 1) strcpy(aux, "SIM");
+            else if(brim == 2) strcpy(aux, "NAO");
+            return aux; 
+        }
+        char * get_material_colour(){ return material_colour; } 
+        float get_maerial_used(){ return used_material; }
+        float get_cost_used(){            
+            cost_used = used_material * ( (Resina_3DFila + Frete_Resina) /1000 );
+            cost_used = RoundCost(cost_used);
+            return cost_used;
+        }
+        float get_cost_time(){            
+            cost_time = (1.6/60) * minutes;
+            cost_time = RoundCost(cost_time);
+            return cost_time;
+        }
+};
 
 vector <Impressao> lista_impressao;
 vector <CorteALaser> lista_laser;
 vector <CorteCNC> lista_cnc;
+vector <Resina> lista_resina;
 
 bool prioridade_print(const Impressao &a, const Impressao &b) {
     return ( a.get_os() < b.get_os() );
@@ -258,35 +304,23 @@ bool prioridade_laser(const CorteALaser &a, const CorteALaser &b) {
 bool prioridade_cnc(const CorteCNC &a, const CorteCNC &b) {
     return ( a.get_os() < b.get_os() );
 }
+bool prioridade_resina(const Resina &a, const Resina &b) {
+    return ( a.get_os() < b.get_os() );
+}
+
 //main
 int main(){
     
     load_file();
-    
     /*
         //Area de Testes:
-
-        cout << "ordem de servico: " << ordem_de_servico << endl; 
         system("read -p \"Enter para continuar\"");
-
-        for(int i = 0; i < lista_impressao.size(); i++) {
-            lista_impressao[i].viewPrint(1);
-            cout << endl;
-        }
-    
-        int value = 0;
-        bool check = false;
-        do{
-                TextoDoMenu(13);
-                cout << "1. ABS\n2. PLA\n\nTipo de filamento: ";
-                cin >> value;
-                check = validacao_int(1, 2, value, 13);
-        }while(!check);
     */
     do{ 
         sort(lista_impressao.begin(), lista_impressao.end(), prioridade_print);
         sort(lista_laser.begin(), lista_laser.end(), prioridade_laser);
         sort(lista_cnc.begin(), lista_cnc.end(), prioridade_cnc);
+        sort(lista_resina.begin(), lista_resina.end(), prioridade_resina);
 
         op = MenuPrincipal();
         
@@ -296,7 +330,7 @@ int main(){
                     CriarOrdemDeServico();       
                     break;
                 case 2:
-                    CriarOrdemDeServico(1);
+                    CriarOrdemDeServico(1); // (1) quando a ordem de servico ja existe e deseja-se inserir mais 1 ou mais objetos na mesma os.
                     break;
                 case 3:
                     do{
@@ -354,7 +388,6 @@ int main(){
                     break;    
                 default:
                     system("clear");
-                    
                     cout << "opcao invalida digitada." << endl;
             }
             if(op != 0) op = -1;
@@ -384,6 +417,8 @@ void TextoDoMenu(int opcao){
         case 16: cout << "\t\tCalculo OS - Impressao 3D\n\n\n"; break;
         case 17: cout << "\t\tCalculo OS - Corte a Laser\n\n\n"; break;
         case 18: cout << "\t\tCalculo OS - Corte CNC\n\n\n"; break;
+        case 19: cout << "\t\tCalculo OS - Impressao 3D - Resina\n\n\n"; break;
+        case 20: cout << "\t\tCadastrar Impressao 3D - Resina\n\n\n"; break;
     }
 }
 char * tipo_de_servico(int tipo){
@@ -391,7 +426,8 @@ char * tipo_de_servico(int tipo){
     switch (tipo){
         case 1: strcpy(tipo_do_servico, "Impressao 3D"); break;
         case 2: strcpy(tipo_do_servico, "Corte a Laser"); break;
-        case 3: strcpy(tipo_do_servico, "Corte CNC"); break;   
+        case 3: strcpy(tipo_do_servico, "Corte CNC"); break;  
+        case 4: strcpy(tipo_do_servico, "Impressao 3D - Resina"); break; 
     }
     return tipo_do_servico;
 }
@@ -429,7 +465,7 @@ int SelecionarServico(){
     do{
         system("clear");
         TextoDoMenu(9);
-        cout << "1. Impressão 3D.\n2. Corte a Laser.\n3. Corte CNC Fresa\n\nDigite o tipo de servico:\t";
+        cout << "1. Impressão 3D.\n2. Corte a Laser.\n3. Corte CNC Fresa\n4. Impressao 3D - Resina\n\nDigite o tipo de servico:\t";
         cin >> servico;
         cin.ignore();
     }while(servico < 1 && servico > 3);
@@ -450,6 +486,9 @@ void CriarOrdemDeServico(int opcao){
         case 3:
             CriarCNC(opcao);
             break;
+        case 4: 
+            CriarResina(opcao);
+            break;    
     }
 }
 void CriarImpressao(int opcao){
@@ -699,6 +738,88 @@ void CriarCNC(int opcao){
     
     if(opcao == 0) ordem_de_servico++;
 }
+void CriarResina(int opcao){
+    char objectName[100], cliente[100], material_colour[100];
+    float layer_height, used_material;
+    int minutes, os_search, brim;
+    
+    bool check = false;
+    Resina aux;
+
+    if(opcao == 0){    
+        TextoDoMenu(1);
+        cout << "Digite o nome do cliente: ";
+        cin.getline(cliente, 100);
+        aux.set_cliente(cliente);
+    }
+    else if(opcao == 1){
+        do{
+            TextoDoMenu(2);
+            cout << "digite o numero da OS: ";
+            cin >> os_search;
+            cin.ignore();
+
+            for(int i = 0; i < lista_resina.size(); i++){
+                if(os_search == lista_resina[i].get_os()) check = true; 
+                if(check) { 
+                    aux.set_cliente( lista_resina[i].get_cliente() );
+                    aux.set_os( lista_resina[i].get_os() );
+                    break;
+                }
+            }
+            if(!check){
+                TextoDoMenu(2);
+                cout << "ordem de servico nao cadastrada.\n\nDigite novamente.";
+                system("read -p \"Enter para continuar\"");
+            } 
+        }while(!check);
+    }
+
+    do{
+        if(opcao == 0) aux.set_os(ordem_de_servico);
+
+        TextoDoMenu(20);
+        cout << "digite o nome da impressao: ";
+        cin.getline(objectName, 100);
+
+        TextoDoMenu(20);
+        cout << "digite a cor da resina: ";
+        cin.getline(material_colour, 100);
+
+        TextoDoMenu(20);        
+        cout << "digite a altura de camada: ";
+        cin >> layer_height;
+
+        TextoDoMenu(20);        
+        cout << "digite a quantidade de material utilizado: ";
+        cin >> used_material;
+
+        TextoDoMenu(20);        
+        cout << "tempo de impressao: ";
+        cin >> minutes;
+
+        TextoDoMenu(20);
+        cout << "Utiliza brim?\n\n1.SIM\n2.NAO\n\nopcao: ";
+        cin >> brim; 
+
+        aux.set_objectName(objectName);
+        aux.set_material_colour(material_colour);
+        aux.set_layer_height(layer_height);
+        aux.set_used_material(used_material);
+        aux.set_brim(brim);
+        aux.set_time(minutes);
+
+        lista_resina.push_back(aux);
+
+        TextoDoMenu(20);
+        cout << "deseja inserir outra peca? \n\n1.SIM\n2.NAO \n\nopcao: ";
+        cin >> op;
+        cin.ignore();
+    }while(op == 1);
+    
+    if(opcao == 0) ordem_de_servico++;
+}
+
 void CalculoValorTotalOS(){
     int  tipo_os, os, opcao;
     bool check = false;
