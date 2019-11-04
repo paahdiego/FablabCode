@@ -288,6 +288,25 @@ class Resina{
             cost_time = RoundCost(cost_time);
             return cost_time;
         }
+        void viewPrint(int option = 0){
+            cout << "Ordem de servico: " << os << endl;
+            cout << "Nome do cliente: " << cliente << endl;
+            cout << "Tipo de servico: " << tipo_de_servico(tipo_os) << endl;
+            cout << "Cor da resina: " << material_colour << endl;
+            cout << "Impressao: " << objectName << endl;
+            
+            if(option == 1){
+                cout << "Altura de camada: " << layer_height << "mm" << endl;
+                cout << "Brim: " << get_brim() << endl;
+                cout << "Resina utilizada: " << used_material << " gramas" << endl;
+                cout << "Tempo de impressao: " << minutes<< " minutos" << endl;
+                cout << endl;
+                cout << "Custo por tempo: R$" << get_cost_time() << endl;
+                cout << "Custo por material utilizado: R$" << get_cost_used() << endl;
+                cout << "Custo total da peca: R$" << get_cost_time() + get_cost_used() << endl; 
+            }
+            cout << separador;
+        }
 };
 
 vector <Impressao> lista_impressao;
@@ -348,9 +367,9 @@ int main(){
                             //cin >> op;
                             //cin.ignore();
                             op = SelecionarServico();
-                            check = validacao_int(1, 3, op, 3);
+                            check = validacao_int(1, 4, op, 3);
                             
-                        }while(op != 1 && op !=2 && op != 3);
+                        }while(op != 1 && op !=2 && op != 3 && op != 4);
                         
                         if(op == 1){
                             TextoDoMenu(10);
@@ -364,10 +383,16 @@ int main(){
                                 lista_laser[i].viewLaser();
                             }
                         }
-                        else{   
+                        else if(op == 3){   
                             TextoDoMenu(12);
                             for(int i = 0; i < lista_cnc.size(); i++){
                                 lista_cnc[i].viewCNC();
+                            }
+                        }
+                        else{
+                            TextoDoMenu(21);
+                            for(int i = 0; i < lista_resina.size(); i++){
+                                lista_resina[i].viewPrint();
                             }
                         }
                     }
@@ -419,6 +444,7 @@ void TextoDoMenu(int opcao){
         case 18: cout << "\t\tCalculo OS - Corte CNC\n\n\n"; break;
         case 19: cout << "\t\tCalculo OS - Impressao 3D - Resina\n\n\n"; break;
         case 20: cout << "\t\tCadastrar Impressao 3D - Resina\n\n\n"; break;
+        case 21: cout << "\t\tLista de Impressoes 3D - Resina\n\n\n"; break;
     }
 }
 char * tipo_de_servico(int tipo){
