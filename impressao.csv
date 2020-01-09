@@ -86,6 +86,32 @@
 14;Luan Caruzo - Formula-E;Caixa 3 P2;0.2;70;23.34;16.69;179.6;1;626;1;2
 14;Luan Caruzo - Formula-E;Caixa 4 P1;0.2;70;20.54;14.07;158.01;1;528;1;2
 14;Luan Caruzo - Formula-E;Caixa 4 P2;0.2;70;19.76;13.84;152.06;1;519;1;2
+14;Luan Caruzo - Formula-E;Caixa 3 P1;0.2;70;21.41;15.14;164.76;1;568;1;2
+14;Luan Caruzo - Formula-E;Caixa 3 P2;0.2;70;23.34;16.69;179.6;1;626;1;2
+14;Luan Caruzo - Formula-E;Caixa 4 P1;0.2;70;20.54;14.07;158.01;1;528;1;2
+14;Luan Caruzo - Formula-E;Caixa 4 P2;0.2;70;19.76;13.84;152.06;1;519;1;2
+14;Luan Caruzo - Formula-E;Caixa 3 P1;0.2;70;21.41;15.14;164.76;1;568;1;2
+14;Luan Caruzo - Formula-E;Caixa 3 P2;0.2;70;23.34;16.69;179.6;1;626;1;2
+14;Luan Caruzo - Formula-E;Caixa 4 P1;0.2;70;20.54;14.07;158.01;1;528;1;2
+14;Luan Caruzo - Formula-E;Caixa 4 P2;0.2;70;19.76;13.84;152.06;1;519;1;2
+14;Luan Caruzo - Formula-E;Caixa 3 P1;0.2;70;21.41;15.14;164.76;1;568;1;2
+14;Luan Caruzo - Formula-E;Caixa 3 P2;0.2;70;23.34;16.69;179.6;1;626;1;2
+14;Luan Caruzo - Formula-E;Caixa 4 P1;0.2;70;20.54;14.07;158.01;1;528;1;2
+14;Luan Caruzo - Formula-E;Caixa 4 P2;0.2;70;19.76;13.84;152.06;1;519;1;2
+14;Luan Caruzo - Formula-E;Caixa 3 P1;0.2;70;21.41;15.14;164.76;1;568;1;2
+14;Luan Caruzo - Formula-E;Caixa 3 P2;0.2;70;23.34;16.69;179.6;1;626;1;2
+14;Luan Caruzo - Formula-E;Caixa 4 P1;0.2;70;20.54;14.07;158.01;1;528;1;2
+14;Luan Caruzo - Formula-E;Caixa 4 P2;0.2;70;19.76;13.84;152.06;1;519;1;2
+14;Luan Caruzo - Formula-E;Caixa 3 P1;0.2;70;21.41;15.14;164.76;1;568;1;2
+14;Luan Caruzo - Formula-E;Caixa 3 P2;0.2;70;23.34;16.69;179.6;1;626;1;2
+14;Luan Caruzo - Formula-E;Caixa 4 P1;0.2;70;20.54;14.07;158.01;1;528;1;2
+14;Luan Caruzo - Formula-E;Caixa 4 P2;0.2;70;19.76;13.84;152.06;1;519;1;2
+14;Luan Caruzo - Formula-E;Caixa 3 P1;0.2;70;21.41;15.14;164.76;1;568;1;2
+14;Luan Caruzo - Formula-E;Caixa 3 P2;0.2;70;23.34;16.69;179.6;1;626;1;2
+14;Luan Caruzo - Formula-E;Caixa 4 P1;0.2;70;20.54;14.07;158.01;1;528;1;2
+14;Luan Caruzo - Formula-E;Caixa 4 P2;0.2;70;19.76;13.84;152.06;1;519;1;2
+14;Luan Caruzo - Formula-E;Caixa 4 P1;0.2;70;20.54;14.07;158.01;1;528;1;2
+14;Luan Caruzo - Formula-E;Caixa 4 P2;0.2;70;19.76;13.84;152.06;1;519;1;2
 15;Beliza Patricia - Engenhearia Quimica;Estojo micro-canal;0.2;20;0.9;0.88;5.18;2;33;1;1
 16;Naidson Jr;Oftalmoscopio;0.2;20;1.2;1.41;6.89;2;53;1;1
 17;Wendell - Doutorado;Suporte;0.35;20;2.85;2;21.99;1;75;1;1
@@ -152,3 +178,5 @@
 32;Dielço - Aluno TCC;Suporte principal ;0.15;20;21.71;16.79;124.09;2;630;1;1
 32;Dielço - Aluno TCC;Estator;0.15;20;6.76;6.71;38.64;2;252;1;1
 32;Dielço - Aluno TCC;Rotor;0.15;20;2.08;2.31;11.9;2;87;1;1
+33;Carlos Alberto - Professor;suporteFrontal_cimamod;0.15;20;2.25;1.6;12.86;2;60;1;1
+33;Carlos Alberto - Professor;baixomod;0.15;20;3.79;3.68;21.68;2;138;1;1
