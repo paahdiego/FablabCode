@@ -3,6 +3,8 @@
 # dependencies
 
 ../.vscode
+./.vscode
+./.DS_Store
 
 # testing
 /coverage
