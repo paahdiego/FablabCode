@@ -22,16 +22,24 @@
 using namespace std;
 
 /* Coisas para fazer/Area de Comentario
+    Testar bugs:
+    - Adicionar a possibilidade de dizer se o cliente trouxe o material (impressoras); - Feito!
+    - Adicionar outros Filamentos no calculo de custo; - Feito
+        Adicionado PETG - Testar - Feito
+    
 
-    - Adicionar a possibilidade de dizer se o cliente trouxe o material (impressoras);
-    - Adicionar outros Filamentos no calculo de custo;
-    - Pesquisar biblioteca que crie o recibo em pdf;
-
+    Ainda Fazer:
+        - Pesquisar biblioteca que crie o recibo em pdf;
+    
+    Talvez:
+    - Organizar código em multiplos arquivos;
+    - Pensar em estrutura de bancos de dados substituindo csv;
  */
 
 #define PLA 175.0 //1 kg + frete
 #define ABS 130.0  // 1 kg + frete
-#define PETG 110.0 + 45.0
+#define PETG 110.0 + 45.0 // ainda em construção.
+#define TritanHT 180.0 + 45.0 // ainda em construção 
 
 //Modulo Resina ainda em construção
 #define Frete_Resina 50
@@ -51,11 +59,14 @@ fstream recibo;
     Algumas Variaveis e seus usos.
     
     filament_type =     
-        1 ABS.  2 PLA. 3.PETG 4. Tritan (Testar o filamento na impressora antes)
+        1 ABS.  2 PLA. 3.PETG 4. Tritan HT (Testar o filamento na impressora antes)
     tipo_os =   
         1. 3D.    2. Laser.   3. CNC FRESA.
     impressora = 
         1. Prusa    2. MakerBot
+
+    material_owned = 
+        1. SIM 2. NAO    
 */
 
 //Funcoes que Carregam e Salvam os dados em seus respectivos .csv
@@ -76,7 +87,7 @@ void CriarResina(int opcao = 0);
 char * tipo_de_servico(int tipo);  // Retorna o texto especificando o tipo de servico
 bool validacao_int(int init, int final, int value, int text_menu); // validacao de inteiros usada em diversas partes do programa
 int validacao_os(int os, int menu); // busca uma OS nas listas
-void RelatorioDeUso();
+void RelatorioDeUso(); // Melhorar - Gera um relatorio de uso de cada máquina baseado nas OS.
 void CalculoValorTotalOS(); //Recebe e valida uma OS para Calculo de valor total
 
 void CalculoReciboImpressao(int os); //Calculo por OS e Recibo
@@ -86,7 +97,7 @@ void CalculoReciboCNC(int os); //Calculo por OS e Recibo
 string SeparadorHTML(); // HTML p/ separar objetos no recibo
 string HeaderAndStyle(int tipo, int os = -1, string cliente = ""); // Header HTML com estilo para o recibo
 string GerarRelatorio(int tipo, int os = -1); // funcao que passa o for nas listas e gera a string necessaria para o html
-string TermoDeCompromisso();
+string TermoDeCompromisso(); // Insere o termo de compromisso com data e assinatura no HTML
 template <class type> string precision_to_string(type value, int precision); // Precisao de ponto flutuante em string
 
 //Classes usadas no programa
@@ -94,7 +105,7 @@ class Impressao{
     protected:
         char objectName[100], cliente[100];
         float layer_height, infill, cost_time, cost_used, filament_used;
-        int filament_type, minutes, os, tipo_os, impressora;
+        int filament_type, minutes, os, tipo_os, impressora, material_owned;
         char aux[100];
     public:
         Impressao(){ tipo_os = 1; }
@@ -110,6 +121,7 @@ class Impressao{
         void set_cost_time(float cst){cost_time = cst; }
         void set_cost_used(float cst){cost_used = cst; }
         void set_tipo_os(int tipo){ tipo_os = tipo; }
+        void set_material_owned(int mt_cliente){ material_owned = mt_cliente;}
 
         int get_os() const { return os; }
         char * get_cliente(){ return cliente;}
@@ -120,11 +132,14 @@ class Impressao{
         int get_filament_type(){ return filament_type; }
         int get_minutes(){ return minutes; }
         int get_tipo_os(){ return tipo_os; }
-        float get_cost_used(){            
-            if(filament_type == 1) cost_used = filament_used * (ABS/1000);
-            else if(filament_type == 2) cost_used = filament_used * (PLA/1000);
-            else if(filament_type == 3) cost_used = filament_used * (PETG/1000);
-            cost_used = RoundCost(cost_used);
+        float get_cost_used(){
+            if(material_owned == 2){            
+                if(filament_type == 1) cost_used = filament_used * (ABS/1000);
+                else if(filament_type == 2) cost_used = filament_used * (PLA/1000);
+                else if(filament_type == 3) cost_used = filament_used * (PETG/1000);
+                cost_used = RoundCost(cost_used);
+            }
+            else if(material_owned == 1) cost_used = 0;
             return cost_used;
         }
         float get_cost_time(){            
@@ -134,9 +149,17 @@ class Impressao{
         }
         char * get_filament_type_name(){
             if(filament_type == 1) strcpy(aux, "ABS");
-            else if(filament_type == 2) strcpy(aux, "PLA"); 
+            else if(filament_type == 2) strcpy(aux, "PLA");
+            else if(filament_type == 3) strcpy(aux, "PETG"); 
             return aux;
         }
+        int get_material_owned(){ return material_owned;}
+        char * get_material_owned_text(){
+            if(material_owned == 1) strcpy(aux, "SIM");
+            else if(material_owned == 2) strcpy(aux, "NAO");
+
+            return aux;
+        }        
         int get_printer_int(){ return impressora; }
         char * get_printer(){
             if(impressora == 1) strcpy(aux, "Prusa i3 MK2");
@@ -152,6 +175,7 @@ class Impressao{
             cout << "Impressao: " << objectName << endl;
             
             if(option == 1){
+                cout << "Material do cliente: " << get_material_owned_text() << endl;
                 cout << "Altura de camada: " << layer_height << "mm" << endl;
                 cout << "Infill: " << infill << "%" << endl;
                 cout << "Filamento: " << get_filament_type_name() << endl;
@@ -327,6 +351,8 @@ vector <CorteALaser> lista_laser;
 vector <CorteCNC> lista_cnc;
 vector <Resina> lista_resina;
 
+
+// Organiza os servicos de forma ordenada em seus vectors
 bool prioridade_print(const Impressao &a, const Impressao &b) {
     return ( a.get_os() < b.get_os() );
 }
@@ -376,9 +402,6 @@ int main(){
                         bool check = false;
                         do{
                             TextoDoMenu(3);
-                            //cout << "1. Impressoes 3D.\n2. Corte a Laser\n3. Corte CNC\n\nDeseja mostrar todas ordens de qual servico: ";
-                            //cin >> op;
-                            //cin.ignore();
                             op = SelecionarServico();
                             check = validacao_int(1, 4, op, 3);
                             
@@ -419,7 +442,6 @@ int main(){
                     break;
                 case 4:
                     CalculoValorTotalOS();
-                    //if(lista_impressao.size() != 0) bool checkListas(lista vazia) do something
                     break;
                 case 5:
                     RelatorioDeUso(); 
@@ -498,6 +520,9 @@ void MostrarServico(int os){
     for(int i = 0; i < lista_cnc.size(); i++){
         if(os == lista_cnc[i].get_os()) lista_cnc[i].viewCNC(); 
     }
+    for(int i = 0; i < lista_resina.size(); i++){
+        if(os == lista_resina[i].get_os()) lista_resina[i].viewPrint();
+    }
 }
 int SelecionarServico(){
     int servico = 0;
@@ -507,7 +532,7 @@ int SelecionarServico(){
         cout << "1. Impressão 3D.\n2. Corte a Laser.\n3. Corte CNC Fresa\n4. Impressao 3D - Resina\n\nDigite o tipo de servico:\t";
         cin >> servico;
         cin.ignore();
-    }while(servico < 1 && servico > 3);
+    }while(servico < 1 && servico > 4);
 
     return servico;
 }
@@ -532,8 +557,9 @@ void CriarOrdemDeServico(int opcao){
 }
 void CriarImpressao(int opcao){
     char objectName[100], cliente[100];
-    int filament_type, minutes, os_search, printer;
-    float layer_height, filament_used, infill; 
+    int filament_type, minutes, os_search, printer, material_owned;
+    float layer_height, filament_used, infill;
+    
     
     bool check = false;
     
@@ -583,9 +609,9 @@ void CriarImpressao(int opcao){
         
         do{
             TextoDoMenu(13);
-            cout << "1. ABS\n2. PLA\n\nTipo de filamento: ";
+            cout << "1. ABS\n2. PLA\n3. PETG\n\nTipo de filamento: ";
             cin >> filament_type;
-            check = validacao_int(1, 2, filament_type, 13);
+            check = validacao_int(1, 3, filament_type, 13);
         }while(!check);
 
         TextoDoMenu(13);
@@ -595,6 +621,13 @@ void CriarImpressao(int opcao){
         TextoDoMenu(13);
         cout << "Infill (%): ";
         cin >> infill;
+
+        do{
+            TextoDoMenu(13);
+            cout << "1. SIM\n2. NAO\n\nMaterial do Cliente: ";
+            cin >> material_owned;
+            check = validacao_int(1, 2, material_owned, 13);
+        }while(!check);
 
         TextoDoMenu(13);
         cout << "quantidade de filamento (gramas): ";
@@ -609,10 +642,12 @@ void CriarImpressao(int opcao){
         aux.set_objectName(objectName);
         aux.set_layer_height(layer_height);
         aux.set_infill(infill);
+        aux.set_material_owned(material_owned);
         aux.set_filament_type(filament_type);
         aux.set_filament_used(filament_used);
         aux.set_time(minutes);
         aux.set_impressora(printer);
+
         lista_impressao.push_back(aux);
 
         TextoDoMenu(13);
@@ -1080,7 +1115,7 @@ void load_file(){
     Impressao *auximpressoes = new Impressao;
     CorteALaser *auxlaser = new CorteALaser;
     CorteCNC *auxcnc = new CorteCNC;
-	string aux[12];
+	string aux[13];
     string auxLaserCNC[9];
 	
 	bool check = false;
@@ -1101,7 +1136,8 @@ void load_file(){
             getline(impressoes, aux[8], ';');
             getline(impressoes, aux[9], ';');
             getline(impressoes, aux[10], ';');
-			getline(impressoes, aux[11], '\n');
+			getline(impressoes, aux[11], ';');
+            getline(impressoes, aux[12], '\n');
             check = true;
 		}
 		
@@ -1120,6 +1156,7 @@ void load_file(){
             auximpressoes->set_time(atoi(aux[9].c_str()));
             auximpressoes->set_tipo_os(atoi(aux[10].c_str()));
             auximpressoes->set_impressora(atoi(aux[11].c_str()));
+            auximpressoes->set_material_owned(atoi(aux[12].c_str()));
 
             if(auximpressoes->get_os() > bigger) bigger = auximpressoes->get_os();
 
@@ -1223,9 +1260,10 @@ void save_file(){
 		impressoes << lista_impressao[i].get_filament_type() << ";";
         impressoes << lista_impressao[i].get_minutes() << ";";
         impressoes << lista_impressao[i].get_tipo_os() << ";";
+        impressoes << lista_impressao[i].get_printer_int() << ";";
 
-		if(i < lista_impressao.size() - 1) impressoes << lista_impressao[i].get_printer_int() << "\n";
-		else impressoes << lista_impressao[i].get_printer_int();
+		if(i < lista_impressao.size() - 1) impressoes << lista_impressao[i].get_material_owned() << "\n";
+		else impressoes << lista_impressao[i].get_material_owned();
 	}	
 	impressoes.close();
 
@@ -1336,6 +1374,7 @@ string GerarRelatorio(int tipo, int os){
                     html += "<tr><td>Impressao: </td><td>" + string(lista_impressao[i].get_objectName()) + "</td></tr>";
                     html += "<tr><td>Altura de camada: </td><td>" + precision_to_string(lista_impressao[i].get_layer_height(), 2) + " mm</td></tr>";
                     html += "<tr><td>Infill: </td><td>" + precision_to_string(lista_impressao[i].get_infill(), 0) + "%</td></tr>";
+                    html += "<tr><td>Material do clinte: </td><td>" + string(lista_impressao[i].get_material_owned_text()) + "%</td></tr>";
                     html += "<tr><td>Filamento: </td><td>" + string(lista_impressao[i].get_filament_type_name()) + "</td></tr>";
                     html += "<tr><td>Filamento usado: </td><td>" + precision_to_string(lista_impressao[i].get_filament_used(), 2) + "g</td></tr>";
                     html += "<tr><td>Tempo de impressao: </td><td>" + precision_to_string(lista_impressao[i].get_minutes(), 2) + " minutos</td></tr>";
