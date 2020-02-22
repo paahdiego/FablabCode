@@ -5,6 +5,7 @@
 ../.vscode
 ./.vscode
 ./.DS_Store
+./program
 
 # testing
 /coverage
