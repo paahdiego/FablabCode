@@ -21,8 +21,19 @@
 
 using namespace std;
 
+/* Coisas para fazer/Area de Comentario
+
+    - Adicionar a possibilidade de dizer se o cliente trouxe o material (impressoras);
+    - Adicionar outros Filamentos no calculo de custo;
+    - Pesquisar biblioteca que crie o recibo em pdf;
+
+ */
+
 #define PLA 175.0 //1 kg + frete
 #define ABS 130.0  // 1 kg + frete
+#define PETG 110.0 + 45.0
+
+//Modulo Resina ainda em construção
 #define Frete_Resina 50
 #define Resina_3DFila 550 // 1 kg
 
@@ -40,7 +51,7 @@ fstream recibo;
     Algumas Variaveis e seus usos.
     
     filament_type =     
-        1 ABS.  2 PLA.
+        1 ABS.  2 PLA. 3.PETG 4. Tritan (Testar o filamento na impressora antes)
     tipo_os =   
         1. 3D.    2. Laser.   3. CNC FRESA.
     impressora = 
@@ -75,6 +86,7 @@ void CalculoReciboCNC(int os); //Calculo por OS e Recibo
 string SeparadorHTML(); // HTML p/ separar objetos no recibo
 string HeaderAndStyle(int tipo, int os = -1, string cliente = ""); // Header HTML com estilo para o recibo
 string GerarRelatorio(int tipo, int os = -1); // funcao que passa o for nas listas e gera a string necessaria para o html
+string TermoDeCompromisso();
 template <class type> string precision_to_string(type value, int precision); // Precisao de ponto flutuante em string
 
 //Classes usadas no programa
@@ -111,6 +123,7 @@ class Impressao{
         float get_cost_used(){            
             if(filament_type == 1) cost_used = filament_used * (ABS/1000);
             else if(filament_type == 2) cost_used = filament_used * (PLA/1000);
+            else if(filament_type == 3) cost_used = filament_used * (PETG/1000);
             cost_used = RoundCost(cost_used);
             return cost_used;
         }
@@ -845,7 +858,6 @@ void CriarResina(int opcao){
     
     if(opcao == 0) ordem_de_servico++;
 }
-
 void CalculoValorTotalOS(){
     int  tipo_os, os, opcao;
     bool check = false;
@@ -929,6 +941,8 @@ void CalculoReciboImpressao(int os){
        recibo << "<p>Custo total por tempo: R$ " << RoundCost(total_tempo) << "</p>";
        recibo << "<p>Custo total por material: R$ "  << RoundCost(total_material) << "</p>";
        recibo << "<h3>Total: R$" << RoundCost(total_tempo + total_material) << "</h3>";
+       recibo << "<p id=\"borda\"></p>";
+       recibo << TermoDeCompromisso();
        recibo << "</div></body></html>";
        recibo.close();
 
@@ -1472,6 +1486,21 @@ string GerarRelatorio(int tipo, int os){
           break;
     }
     return html;
+}
+string TermoDeCompromisso(){
+    string termo;
+
+    termo = "<h3 id=\"center\">Uma observação importante:</h3>";
+    termo += "<p style=\"padding-left:5%;\">";
+    termo += "Os usuários do FABLAB UFPB deverão citá-lo em publicações, teses, resumos, etc.";
+    termo += "<br>que contemplem resultados experimentais oriundos da utilização de sua infraestrutura";
+    termo += "<br>e recursos humanos, com o seguinte texto: </p>";
+    termo += "<h4 id=\"center\">''Os autores gostariam de agradecer ao FABLAB UFPB pelos serviços de prototipagem <br >realizados neste trabalho.''</h4>";
+
+    termo += "<p style=\"padding-top:10px; margin-right:19%; text-align: right;\"\">João Pessoa, ____/____/____</p>";
+    termo += "<p id=\"center\">Assinatura: _____________________________________________</p>";
+    
+    return termo;
 }
 template <class type> string precision_to_string(type value, int precision){
     stringstream stream;
