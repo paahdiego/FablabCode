@@ -5,7 +5,13 @@
     Descrição: 
         Código utilizado para cadastro e calculo de custo dos serviços realizados pelo FABLAB UFPB.
 
-    @Paahdiego.
+    Github
+    
+    Creator:
+        @Paahdiego
+
+    Collaborators:
+        @PauloDavi    
 */
 
 #include <iostream>
@@ -1374,7 +1380,7 @@ string GerarRelatorio(int tipo, int os){
                     html += "<tr><td>Impressao: </td><td>" + string(lista_impressao[i].get_objectName()) + "</td></tr>";
                     html += "<tr><td>Altura de camada: </td><td>" + precision_to_string(lista_impressao[i].get_layer_height(), 2) + " mm</td></tr>";
                     html += "<tr><td>Infill: </td><td>" + precision_to_string(lista_impressao[i].get_infill(), 0) + "%</td></tr>";
-                    html += "<tr><td>Material do clinte: </td><td>" + string(lista_impressao[i].get_material_owned_text()) + "%</td></tr>";
+                    html += "<tr><td>Material do clinte: </td><td>" + string(lista_impressao[i].get_material_owned_text()) + "</td></tr>";
                     html += "<tr><td>Filamento: </td><td>" + string(lista_impressao[i].get_filament_type_name()) + "</td></tr>";
                     html += "<tr><td>Filamento usado: </td><td>" + precision_to_string(lista_impressao[i].get_filament_used(), 2) + "g</td></tr>";
                     html += "<tr><td>Tempo de impressao: </td><td>" + precision_to_string(lista_impressao[i].get_minutes(), 2) + " minutos</td></tr>";
