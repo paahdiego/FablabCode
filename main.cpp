@@ -32,12 +32,13 @@ using namespace std;
     - Adicionar a possibilidade de dizer se o cliente trouxe o material (impressoras); - Feito!
     - Adicionar outros Filamentos no calculo de custo; - Feito
         Adicionado PETG - Testar - Feito
-    
-
-    Ainda Fazer:
-        - Pesquisar biblioteca que crie o recibo em pdf;
-    
-    Talvez:
+        Adicionar TritanHT
+        Pensar e como utilizar o hips/PVA
+    - Tipos de Cliente
+    - Finalizar e testar os demais serviços
+    - Material Total usado nas OS
+    - Status de pagamento
+    - Pesquisar biblioteca que crie o recibo em pdf;
     - Organizar código em multiplos arquivos;
     - Pensar em estrutura de bancos de dados substituindo csv;
  */
@@ -46,10 +47,11 @@ using namespace std;
 #define ABS 130.0  // 1 kg + frete
 #define PETG 110.0 + 45.0 // ainda em construção.
 #define TritanHT 180.0 + 45.0 // ainda em construção 
-
-//Modulo Resina ainda em construção
 #define Frete_Resina 50
 #define Resina_3DFila 550 // 1 kg
+#define HoraFilamento 16.00
+#define HoraResina 25.00
+#define minutoLaser 6.00 
 
 static int ordem_de_servico = 0;
 int op = -1;
@@ -67,12 +69,15 @@ fstream recibo;
     filament_type =     
         1 ABS.  2 PLA. 3.PETG 4. Tritan HT (Testar o filamento na impressora antes)
     tipo_os =   
-        1. 3D.    2. Laser.   3. CNC FRESA.
+        1. 3D.    2. Laser.   3. CNC FRESA. 4. Resina
     impressora = 
         1. Prusa    2. MakerBot
 
     material_owned = 
-        1. SIM 2. NAO    
+        1. SIM 2. NAO   
+
+    tipo de cliente = 
+        1. 10% 2. 50% 3. 100%     
 */
 
 //Funcoes que Carregam e Salvam os dados em seus respectivos .csv
@@ -934,13 +939,13 @@ void CalculoValorTotalOS(){
     }
 }
 void CalculoReciboImpressao(int os){
-    float total_tempo = 0, total_material = 0;
+    float total_tempo = 0, total_material = 0, quant_material = 0;
     int qt_pecas = 0, tempo_total = 0, opcao = 0, tipo_os = -1, indice = 0;
     bool check = false;
     
     do{
         TextoDoMenu(16);
-        qt_pecas = 0; tempo_total = 0; total_material = 0; total_tempo = 0;
+        qt_pecas = 0; tempo_total = 0; total_material = 0; total_tempo = 0, quant_material = 0;
 
         for(int i = 0; i < lista_impressao.size(); i++){
             if(os == lista_impressao[i].get_os()){
@@ -949,12 +954,15 @@ void CalculoReciboImpressao(int os){
                 tempo_total += lista_impressao[i].get_minutes();
                 lista_impressao[i].viewPrint(1);
                 tipo_os = lista_impressao[i].get_tipo_os();
+                quant_material += lista_impressao[i].get_filament_used();
                 indice = i;
                 qt_pecas++;
             } 
         }
-        cout << "Tempo total: " << tempo_total << " minutos" << endl;    
+            
         cout << "Quantidade de pecas: " << qt_pecas << " un" << endl;
+        cout << "Tempo total: " << tempo_total << " minutos" << endl;
+        cout << "Quantidade total de material: " << quant_material << "g" << endl;
         cout << "Custo total por material: R$" << RoundCost(total_material) << endl;
         cout << "Custo total por tempo: R$" << RoundCost(total_tempo) << endl;
         cout << "Custo total: R$" << RoundCost(total_material + total_tempo) << endl << endl;
@@ -979,6 +987,7 @@ void CalculoReciboImpressao(int os){
        recibo << "<p id=\"borda\"></p>";
        recibo << "<p>Quantidade de pecas: " << qt_pecas << " unidades </p>";
        recibo << "<p>Tempo total de impressao: " << tempo_total << " minutos</p>";
+       recibo << "<p>Quantidade total de material: " << quant_material << "gramas </p>";
        recibo << "<p>Custo total por tempo: R$ " << RoundCost(total_tempo) << "</p>";
        recibo << "<p>Custo total por material: R$ "  << RoundCost(total_material) << "</p>";
        recibo << "<h3>Total: R$" << RoundCost(total_tempo + total_material) << "</h3>";
@@ -1380,7 +1389,7 @@ string GerarRelatorio(int tipo, int os){
                     html += "<tr><td>Impressao: </td><td>" + string(lista_impressao[i].get_objectName()) + "</td></tr>";
                     html += "<tr><td>Altura de camada: </td><td>" + precision_to_string(lista_impressao[i].get_layer_height(), 2) + " mm</td></tr>";
                     html += "<tr><td>Infill: </td><td>" + precision_to_string(lista_impressao[i].get_infill(), 0) + "%</td></tr>";
-                    html += "<tr><td>Material do clinte: </td><td>" + string(lista_impressao[i].get_material_owned_text()) + "</td></tr>";
+                    html += "<tr><td>Material do cliente: </td><td>" + string(lista_impressao[i].get_material_owned_text()) + "</td></tr>";
                     html += "<tr><td>Filamento: </td><td>" + string(lista_impressao[i].get_filament_type_name()) + "</td></tr>";
                     html += "<tr><td>Filamento usado: </td><td>" + precision_to_string(lista_impressao[i].get_filament_used(), 2) + "g</td></tr>";
                     html += "<tr><td>Tempo de impressao: </td><td>" + precision_to_string(lista_impressao[i].get_minutes(), 2) + " minutos</td></tr>";
