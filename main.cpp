@@ -47,7 +47,7 @@ using namespace std;
 
 #define PLA 175.0              //1 kg + frete
 #define ABS 130.0              // 1 kg + frete
-#define PETG 110.0 + 45.0      // ainda em construção.
+#define PETG 155.0      // ainda em construção.
 #define TritanHT 180.0 + 45.0  // ainda em construção
 #define Frete_Resina 50
 #define Resina_3DFila 550  // 1 kg
@@ -179,7 +179,7 @@ class Impressao {
     cost_time = (16.0 / 60) * minutes;
     if(tipo_cliente == 1) cost_time *= 0.1;
     else if(tipo_cliente == 2) cost_time *= 0.5;
-    //cost_time = RoundCost(cost_time);
+    cost_time = RoundCost(cost_time);
     
     return cost_time;
   }
@@ -1029,7 +1029,7 @@ void CalculoValorTotalOS() {
   }
 }
 void CalculoReciboImpressao(int os) {
-  float total_tempo = 0, total_material = 0, quant_material = 0;
+  float total_tempo = 0, total_material = 0, quant_material = 0, setup = 0;
   int qt_pecas = 0, tempo_total = 0, opcao = 0, tipo_os = -1, indice = 0;
   bool check = false;
 
@@ -1037,6 +1037,7 @@ void CalculoReciboImpressao(int os) {
     TextoDoMenu(16);
     qt_pecas = 0;
     tempo_total = 0;
+    setup = 0;
     total_material = 0;
     total_tempo = 0, quant_material = 0;
 
@@ -1053,12 +1054,21 @@ void CalculoReciboImpressao(int os) {
       }
     }
 
+    if(qt_pecas >=3){
+      setup = 3.0 * qt_pecas;
+    }
+    else{
+      setup = qt_pecas * 6.0;
+    }
+
     cout << "Quantidade de pecas: " << qt_pecas << " un" << endl;
     cout << "Tempo total: " << tempo_total << " minutos" << endl;
     cout << "Quantidade total de material: " << quant_material << "g" << endl;
+    cout << "Custo total por setup: R$" << RoundCost(setup) << endl;
     cout << "Custo total por material: R$" << RoundCost(total_material) << endl;
     cout << "Custo total por tempo: R$" << RoundCost(total_tempo) << endl;
-    cout << "Custo total: R$" << RoundCost(total_material + total_tempo) << endl
+    cout << "Custo total por setup: R$" << RoundCost(setup) << endl;
+    cout << "Custo total: R$" << RoundCost(total_material + total_tempo + setup) << endl
          << endl;
 
     cout << "\nDeseja gerar o recibo?\n1. SIM\n2. NAO\n\nopcao: ";
@@ -1084,7 +1094,8 @@ void CalculoReciboImpressao(int os) {
     recibo << "<p>Quantidade total de material: " << quant_material << "gramas </p>";
     recibo << "<p>Custo total por tempo: R$ " << RoundCost(total_tempo) << "</p>";
     recibo << "<p>Custo total por material: R$ " << RoundCost(total_material) << "</p>";
-    recibo << "<h3>Total: R$" << RoundCost(total_tempo + total_material) << "</h3>";
+    recibo << "<p>Custo total por setup: R$ " << RoundCost(setup) << "</p>";
+    recibo << "<h3>Total: R$" << RoundCost(total_tempo + total_material + setup) << "</h3>";
     recibo << "<p id=\"borda\"></p>";
     recibo << TermoDeCompromisso();
     recibo << "</div></body></html>";
