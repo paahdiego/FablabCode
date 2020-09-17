@@ -8,6 +8,11 @@
 ./programa
 ./program
 
+program
+programa
+.DS_Store
+.vscode
+
 # testing
 /coverage
 
